@@ -82,11 +82,11 @@ Windows에서 빌드할 때는 git의 `core.autocrlf=false`와 git 사용자 정
 플러그인 로딩, 비동기 작업, 동기 작업(primaryThread=true), 서로 다른 세 지역(아직 로드 안 된 청크)의 블록 수정, 다른 지역에 엔티티 스폰, 동기 teleport, `getEntities()`, 스코어보드 팀, 새 스코어보드와 objective, `dispatchCommand`, 반복 작업(140틱, TPS 18~20)
 
 ### 실제 플러그인 18개: 전부 에러 없이 켜짐 (시작 18초)
-- **Folia 미지원(호환 모드)**: Multiverse-Core 5.8.2, AdvancedPortals 2.8.0, BeaconWar 5.0.0, NoLeavesDecay, URLCustomDiscs, JjimongHat 2.0.0
+- **Folia 미지원(호환 모드)**: Multiverse-Core 5.8.2, AdvancedPortals 2.8.0, NoLeavesDecay, URLCustomDiscs 외 비공개 플러그인
 - **Folia 지원(같이 돌림)**: LuckPerms, WorldEdit, WorldGuard, PlaceholderAPI, packetevents, Oraxen, BetterModel
 
 명령어 확인 결과:
-- 정상 동작: `mv list`, `mv version`, `portal list`, `jhat`, `lp info`, `papi version`, `version`, `/tps`, `/mspt`
+- 정상 동작: `mv list`, `mv version`, `portal list`, `lp info`, `papi version`, `version`, `/tps`, `/mspt`
 - Folia가 꺼뒀던 명령어도 정상 동작: `scoreboard objectives add`, `team add`, `bossbar add`
 - `setblock` / `clone` / `data`는 "That position is not loaded"를 냈습니다. Paper와 같은 바닐라 동작이에요(로드 안 된 위치).
 

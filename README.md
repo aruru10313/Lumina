@@ -120,7 +120,7 @@ flowchart LR
 
 - **테스트 플러그인 `compat-test/`:** 11/11 PASS
 - **실제 플러그인 18개 동시 실행:** 전부 에러 없이 켜짐 (시작 18초)
-  - 호환 모드: Multiverse-Core, AdvancedPortals, BeaconWar, NoLeavesDecay, URLCustomDiscs, JjimongHat
+  - 호환 모드: Multiverse-Core, AdvancedPortals, NoLeavesDecay, URLCustomDiscs 외 비공개 플러그인
   - Folia 지원: LuckPerms, WorldEdit, WorldGuard, PlaceholderAPI, packetevents, Oraxen, BetterModel
 
 > [!CAUTION]
