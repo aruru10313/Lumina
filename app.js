@@ -3,6 +3,7 @@
   "use strict";
 
   const REPO = "aruru10313/Lumina";
+  const STATS = "https://lumina-stats.aruru.kr";
   // Minecraft versions with an upstream Folia branch, newest first.
   const TARGETS = ["26.3", "26.2", "26.1.2", "1.21.11", "1.21.8", "1.21.7", "1.21.6", "1.21.5", "1.21.4", "1.20.6", "1.20.4"];
 
@@ -98,7 +99,7 @@
         ${b.commit ? `<dt>${esc(s("commit"))}</dt><dd><a href="https://github.com/${REPO}/commit/${esc(b.commit)}">${esc(b.commit.slice(0, 10))}</a></dd>` : ""}
       </dl>
       <div class="dlrow">
-        <a class="btn primary" href="${esc(b.url)}">${esc(s("dl"))}</a>
+        <a class="btn primary" href="${esc(b.url)}" data-dl="${esc(v)}">${esc(s("dl"))}</a>
         <a class="btn sm" href="${esc(b.page)}" target="_blank" rel="noopener">${esc(s("notes"))}</a>
       </div>
       <div class="runbox"><div class="small muted">${esc(s("run"))} <button type="button" class="copy" data-copy="${esc(runCmd)}">${esc(s("copy"))}</button></div>
@@ -109,12 +110,23 @@
           <td>#${o.build}</td><td class="m">${esc(fmtDate(o.date))}</td>
           <td class="m">${o.commit ? `<a href="https://github.com/${REPO}/commit/${esc(o.commit)}">${esc(o.commit.slice(0, 7))}</a>` : "-"}</td>
           <td class="m">${esc(fmtSize(o.size))}</td>
-          <td style="text-align:right"><a href="${esc(o.url)}">${esc(s("dl"))}</a></td></tr>`).join("")}</tbody>
+          <td style="text-align:right"><a href="${esc(o.url)}" data-dl="${esc(v)}">${esc(s("dl"))}</a></td></tr>`).join("")}</tbody>
       </table>
       <p class="small muted" style="margin-top:18px">${esc(s("unofficial"))}</p>`;
+    vdetail.querySelectorAll("[data-dl]").forEach((a) => a.addEventListener("click", () => countDownload(a.dataset.dl)));
     vdetail.querySelectorAll("[data-copy]").forEach((btn) => btn.addEventListener("click", async () => {
       try { await navigator.clipboard.writeText(btn.dataset.copy); btn.textContent = s("copied"); } catch (e) { /* ignore */ }
     }));
+  }
+
+  // Download click counter: only a per-version count is sent (no personal data).
+  // The same browser is counted once per version; the marker stays in this browser only.
+  function countDownload(v) {
+    const key = "lumina.dl." + v;
+    try { if (localStorage.getItem(key)) return; localStorage.setItem(key, "1"); } catch (e) { /* storage blocked: count anyway */ }
+    try {
+      fetch(STATS + "/hit?v=" + encodeURIComponent(v), { method: "POST", mode: "cors", keepalive: true }).catch(() => {});
+    } catch (e) { /* ignore */ }
   }
 
   function render() { renderList(); renderDetail(); }
