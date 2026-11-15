@@ -1,6 +1,6 @@
 # Lumina (루미나)
 
-Folia 26.3 기반 서버입니다. Folia에 **일반 Paper 플러그인 호환 모드(세상 멈추기, stop-the-world)**를 더했어요.
+Folia 26.2 기반 서버입니다. Folia에 **일반 Paper 플러그인 호환 모드(세상 멈추기, stop-the-world)**를 더했어요.
 
 - 서버 이름(`/version`, 시작 로그)은 **Lumina**로 나옵니다. 서버가 켜질 때 LUMINA 로고가 색 그라데이션으로 출력돼요.
 - `Brand-Id`는 `papermc:folia`로 그대로 뒀습니다. 플러그인이 Folia인지 확인해서 Folia 스케줄러를 쓰는 동작이 계속 맞게 돌아가도록 하기 위해서예요.
@@ -34,7 +34,7 @@ Folia 26.3 기반 서버입니다. Folia에 **일반 Paper 플러그인 호환 �
 
 - **플러그인 로딩**: `folia-supported`가 없어도 로딩합니다. 콘솔에 경고를 남겨요.
 - **Bukkit API**: `BukkitScheduler`, 동기 `teleport()`(내부에서 `teleportAsync`로 넘김), 스코어보드 API(`registerNewTeam`, `getNewScoreboard` 등), 비동기 스레드에서 호출하는 `getTPS()`
-- **바닐라 명령어**: `bossbar`, `clone`, `compute`, `data`, `debug`, `dialog`, `function`, `item`, `loot`, `return`, `schedule`, `scoreboard`, `spectate`, `spreadplayers`, `tag`, `team`, `teammsg`, `tick`, `trigger`, `waypoint`
+- **바닐라 명령어**: `bossbar`, `clone`, `data`, `debug`, `dialog`, `function`, `item`, `loot`, `return`, `schedule`, `scoreboard`, `spectate`, `spreadplayers`, `tag`, `team`, `teammsg`, `tick`, `trigger`, `waypoint`
 - **Paper / Spigot 명령어**: `/mspt`(명령을 친 사람이 있는 지역 기준), `/restart`
 - `/tps`는 Folia의 지역별 `/tps`를 그대로 씁니다.
 
@@ -68,7 +68,7 @@ Folia 26.3 기반 서버입니다. Folia에 **일반 Paper 플러그인 호환 �
 ./gradlew applyAllPatches
 ./gradlew :folia-server:createPaperclipJar
 ```
-결과물: `folia-server/build/libs/folia-paperclip-26.3.local-SNAPSHOT.jar`
+결과물: `folia-server/build/libs/folia-paperclip-26.2.local-SNAPSHOT.jar`
 
 Windows에서 빌드할 때는 git의 `core.autocrlf=false`와 git 사용자 정보가 필요합니다.
 
@@ -76,7 +76,7 @@ Windows에서 빌드할 때는 git의 `core.autocrlf=false`와 git 사용자 정
 
 `compat-test/`는 Folia 미지원 테스트 플러그인입니다. 동기 반복 작업, 비동기 작업, 서로 멀리 떨어진 세 지역의 블록 수정, 엔티티 스폰과 teleport, 스코어보드, `dispatchCommand`를 확인하고, 결과를 `[LegacyTest] PASS/FAIL`로 로그에 남깁니다.
 
-## 테스트 결과 (Windows, 이 PC)
+## 테스트 결과 (26.3, Windows)
 
 ### 테스트 플러그인 (`compat-test/`): 11/11 PASS
 플러그인 로딩, 비동기 작업, 동기 작업(primaryThread=true), 서로 다른 세 지역(아직 로드 안 된 청크)의 블록 수정, 다른 지역에 엔티티 스폰, 동기 teleport, `getEntities()`, 스코어보드 팀, 새 스코어보드와 objective, `dispatchCommand`, 반복 작업(140틱, TPS 18~20)
