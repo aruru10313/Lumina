@@ -1,0 +1,72 @@
+name: Release Lumina
+
+# Builds the paperclip jar for this branch's Minecraft version
+# and publishes it as a GitHub Release (lumina-<mc>-b<run>).
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "ver/**"
+    paths-ignore:
+      - "**.md"
+      - ".github/assets/**"
+      - ".github/workflows/**"
+      - "compat-test/**"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  JAVA_VERSION: "25"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v5
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: zulu
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Apply patches
+        run: |
+          git config --global user.email "no-reply@github.com"
+          git config --global user.name "GitHub Actions"
+          ./gradlew applyAllPatches --stacktrace
+
+      - name: Build paperclip jar
+        env:
+          BUILD_NUMBER: ${{ github.run_number }}
+        run: ./gradlew :folia-server:createPaperclipJar --stacktrace
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          MC=$(grep '^mcVersion=' gradle.properties | cut -d= -f2 | tr -d '[:space:]')
+          JAR=$(ls folia-server/build/libs/folia-paperclip-*.jar | head -n1)
+          OUT="lumina-${MC}-b${GITHUB_RUN_NUMBER}.jar"
+          cp "$JAR" "$OUT"
+          sha256sum "$OUT" > "$OUT.sha256"
+          TAG="lumina-${MC}-b${GITHUB_RUN_NUMBER}"
+          # only the default branch (newest Minecraft version) is marked "Latest"
+          LATEST="--latest=false"
+          [ "${GITHUB_REF_NAME}" = "${{ github.event.repository.default_branch }}" ] && LATEST="--latest"
+          gh release create "$TAG" "$OUT" "$OUT.sha256" \
+            --target "$GITHUB_SHA" $LATEST \
+            --title "Lumina ${MC} (build ${GITHUB_RUN_NUMBER})" \
+            --notes "Lumina for Minecraft ${MC}. Commit: ${GITHUB_SHA}
+
+          Run with Java ${JAVA_VERSION}+: \`java -jar ${OUT} --nogui\`"
