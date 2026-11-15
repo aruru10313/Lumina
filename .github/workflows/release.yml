@@ -9,6 +9,7 @@ on:
       - "ver/**"
     paths-ignore:
       - "**.md"
+      - ".github/assets/**"
 
 permissions:
   contents: write
