@@ -132,7 +132,7 @@ flowchart LR
 
 ```bash
 ./gradlew applyAllPatches
-./gradlew :folia-server:createPaperclipJar
+./gradlew :folia-server:createMojmapPaperclipJar
 # → folia-server/build/libs/folia-paperclip-*.jar
 ```
 

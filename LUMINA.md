@@ -66,7 +66,7 @@ Folia 1.21.11 기반 서버입니다. Folia에 **일반 Paper 플러그인 호�
 
 ```bash
 ./gradlew applyAllPatches
-./gradlew :folia-server:createPaperclipJar
+./gradlew :folia-server:createMojmapPaperclipJar
 ```
 결과물: `folia-server/build/libs/folia-paperclip-1.21.11-R0.1-SNAPSHOT.jar`
 
