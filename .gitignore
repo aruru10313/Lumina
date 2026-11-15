@@ -17,3 +17,4 @@ build
 /folia-checkstyle/build.gradle.kts
 
 .idea/
+compat-test/real-server/
