@@ -1,11 +1,11 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: hayul <hayul@localhost>
-Date: Wed, 11 Nov 2026 12:03:55 +0900
+From: aruru10313 <195274207+aruru10313@users.noreply.github.com>
+Date: Sun, 15 Nov 2026 19:30:45 +0900
 Subject: [PATCH] Legacy plugin compatibility mode
 
 
 diff --git a/src/main/java/ca/spottedleaf/moonrise/common/util/TickThread.java b/src/main/java/ca/spottedleaf/moonrise/common/util/TickThread.java
-index 72a3478a98912caae8899df37218dd2a628a6e05..e44f634b23166dcfb84730625d163fcb9d9b4dfa 100644
+index 6c74787321748702022787b65ff5465f8bcec4ad..112bd967b3e033e67de5097d2b2e75e4b8a67ad6 100644
 --- a/src/main/java/ca/spottedleaf/moonrise/common/util/TickThread.java
 +++ b/src/main/java/ca/spottedleaf/moonrise/common/util/TickThread.java
 @@ -143,6 +143,7 @@ public class TickThread extends Thread {
@@ -90,38 +90,25 @@ index 72a3478a98912caae8899df37218dd2a628a6e05..e44f634b23166dcfb84730625d163fcb
              return true;
          }
 diff --git a/src/main/java/io/papermc/paper/PaperBootstrap.java b/src/main/java/io/papermc/paper/PaperBootstrap.java
-index 5d24f049fa88ed619c7793cf57525aca641a6df7..4e3fec47bfa15f57c41beafe13c82724dfa74e85 100644
+index d543b1b107ab8d3eeb1fc3c1cadf489928d2786e..1331cb061e0eaccb9dff5e95bd1519b708a7e154 100644
 --- a/src/main/java/io/papermc/paper/PaperBootstrap.java
 +++ b/src/main/java/io/papermc/paper/PaperBootstrap.java
-@@ -20,6 +20,7 @@ public final class PaperBootstrap {
-         SharedConstants.CHECK_DATA_FIXER_SCHEMA = Boolean.getBoolean("paper.updatingMinecraft");
-         // Paper end - Perf: Skip data fixer schema sanity check
+@@ -16,6 +16,7 @@ public final class PaperBootstrap {
+     public static void boot(final OptionSet options) {
+         SharedConstants.tryDetectVersion();
  
 +        io.papermc.paper.lumina.LuminaBanner.print(LOGGER, ServerBuildInfo.buildInfo().minecraftVersionId()); // Lumina - startup banner
          getStartupVersionMessages().forEach(LOGGER::info);
  
          Main.main(options);
-diff --git a/src/main/java/io/papermc/paper/command/PaperCommands.java b/src/main/java/io/papermc/paper/command/PaperCommands.java
-index 6216147f4d4c04ba616375430a91232d5ebe838a..2348c19aa6096b426da94e8ebe9008bc6fc4dc0e 100644
---- a/src/main/java/io/papermc/paper/command/PaperCommands.java
-+++ b/src/main/java/io/papermc/paper/command/PaperCommands.java
-@@ -33,7 +33,7 @@ public final class PaperCommands {
+diff --git a/src/main/java/io/papermc/paper/command/MSPTCommand.java b/src/main/java/io/papermc/paper/command/MSPTCommand.java
+index 04b8097b147350f97fdee16c0b8aa78a87fddd33..0f5ad7190f4235a0ba91960ecbabe06d3b3b6594 100644
+--- a/src/main/java/io/papermc/paper/command/MSPTCommand.java
++++ b/src/main/java/io/papermc/paper/command/MSPTCommand.java
+@@ -46,12 +46,17 @@ public final class MSPTCommand extends Command {
+     public boolean execute(CommandSender sender, String commandLabel, String[] args) {
+         if (!testPermission(sender)) return true;
  
-     public static void registerCommands() {
-         // Paper commands go here
--        //registerInternalCommand(PaperMSPTCommand.create(), "paper", PaperMSPTCommand.DESCRIPTION, List.of(), Set.of()); // Folia - region threading
-+        if (io.papermc.paper.threadedregions.LegacyCompat.COMMANDS) registerInternalCommand(PaperMSPTCommand.create(), "paper", PaperMSPTCommand.DESCRIPTION, List.of(), Set.of()); // Folia - region threading // Folia-Compat - re-enabled, region aware
-         registerInternalCommand(PaperVersionCommand.create(), "bukkit", PaperVersionCommand.DESCRIPTION, List.of("ver", "about"), Set.of());
-         registerInternalCommand(PaperPluginsCommand.create(), "bukkit", PaperPluginsCommand.DESCRIPTION, List.of("pl"), Set.of());
-     }
-diff --git a/src/main/java/io/papermc/paper/command/PaperMSPTCommand.java b/src/main/java/io/papermc/paper/command/PaperMSPTCommand.java
-index c4e9a5771f8015c75bbd16c04040607d8c7e5fbd..016af49bc228619968a690c6edcc19250ea9da3b 100644
---- a/src/main/java/io/papermc/paper/command/PaperMSPTCommand.java
-+++ b/src/main/java/io/papermc/paper/command/PaperMSPTCommand.java
-@@ -40,12 +40,17 @@ public class PaperMSPTCommand {
- 
-     private int execute(CommandContext<CommandSourceStack> context) {
-         CommandSender sender = context.getSource().getSender();
 -        MinecraftServer server = MinecraftServer.getServer();
 +        // Folia-Compat start - report the tick times of the sender's region (or the global region for the console)
 +        final io.papermc.paper.threadedregions.TickRegionScheduler.RegionScheduleHandle handle =
@@ -140,7 +127,7 @@ index c4e9a5771f8015c75bbd16c04040607d8c7e5fbd..016af49bc228619968a690c6edcc1925
  
          sender.sendMessage(text().content("Server tick times ").color(GOLD)
              .append(text().color(YELLOW)
-@@ -61,7 +66,7 @@ public class PaperMSPTCommand {
+@@ -67,7 +72,7 @@ public final class MSPTCommand extends Command {
              ).append(
                  text(" from last 5s"),
                  text(",", GRAY),
@@ -149,8 +136,8 @@ index c4e9a5771f8015c75bbd16c04040607d8c7e5fbd..016af49bc228619968a690c6edcc1925
                  text(",", GRAY),
                  text(" 1m"),
                  text(":", YELLOW)
-@@ -79,8 +84,13 @@ public class PaperMSPTCommand {
-         return Command.SINGLE_SUCCESS;
+@@ -85,8 +90,13 @@ public final class MSPTCommand extends Command {
+         return true;
      }
  
 +    // Folia-Compat start - region aware
@@ -165,10 +152,10 @@ index c4e9a5771f8015c75bbd16c04040607d8c7e5fbd..016af49bc228619968a690c6edcc1925
          double minD = reportData == null ? 0.0 : reportData.timePerTickData().segmentAll().least() * 1.0E-6D;
          double maxD = reportData == null ? 0.0 : reportData.timePerTickData().segmentAll().greatest() * 1.0E-6D;
 diff --git a/src/main/java/io/papermc/paper/plugin/manager/PaperEventManager.java b/src/main/java/io/papermc/paper/plugin/manager/PaperEventManager.java
-index 8b7a15af1eb2cc0318e26d7199c8e684de63cd72..4426e9c00e421e5b2fccf74c0cc72f6cad09ede2 100644
+index 7ce9ebba8ce304d1f3f21d4f15ee5f3560d7700b..23a16fa4a8f3b3e24b65eeb345f95ecee6dd587d 100644
 --- a/src/main/java/io/papermc/paper/plugin/manager/PaperEventManager.java
 +++ b/src/main/java/io/papermc/paper/plugin/manager/PaperEventManager.java
-@@ -43,6 +43,26 @@ class PaperEventManager {
+@@ -45,6 +45,26 @@ class PaperEventManager {
          HandlerList handlers = event.getHandlers();
          RegisteredListener[] listeners = handlers.getRegisteredListeners();
  
@@ -196,10 +183,10 @@ index 8b7a15af1eb2cc0318e26d7199c8e684de63cd72..4426e9c00e421e5b2fccf74c0cc72f6c
              if (!registration.getPlugin().isEnabled()) {
                  continue;
 diff --git a/src/main/java/io/papermc/paper/plugin/manager/PaperPluginInstanceManager.java b/src/main/java/io/papermc/paper/plugin/manager/PaperPluginInstanceManager.java
-index 455e8c24d98fcd0ae0a349737a0e709a05ed9170..a042959974a1121c21e8e10069cd66699dd94858 100644
+index 578102113c2034ed220a4753ee5b69e0270321ce..5897d4a5e7c7db51d6668c08456e71a7a65d1d00 100644
 --- a/src/main/java/io/papermc/paper/plugin/manager/PaperPluginInstanceManager.java
 +++ b/src/main/java/io/papermc/paper/plugin/manager/PaperPluginInstanceManager.java
-@@ -198,6 +198,11 @@ class PaperPluginInstanceManager {
+@@ -204,6 +204,11 @@ class PaperPluginInstanceManager {
              } // Paper
  
              try {
@@ -211,7 +198,7 @@ index 455e8c24d98fcd0ae0a349737a0e709a05ed9170..a042959974a1121c21e8e10069cd6669
                  jPlugin.setEnabled(true);
              } catch (Throwable ex) {
                  this.server.getLogger().log(Level.SEVERE, "Error occurred while enabling " + plugin.getPluginMeta().getDisplayName() + " (Is it up to date?)", ex);
-@@ -233,6 +238,11 @@ class PaperPluginInstanceManager {
+@@ -239,6 +244,11 @@ class PaperPluginInstanceManager {
  
              this.server.getPluginManager().callEvent(new PluginDisableEvent(plugin));
              try {
@@ -223,7 +210,7 @@ index 455e8c24d98fcd0ae0a349737a0e709a05ed9170..a042959974a1121c21e8e10069cd6669
                  javaPlugin.setEnabled(false);
              } catch (Throwable ex) {
                  this.server.getLogger().log(Level.SEVERE, "Error occurred while disabling " + pluginName, ex);
-@@ -260,6 +270,16 @@ class PaperPluginInstanceManager {
+@@ -266,6 +276,16 @@ class PaperPluginInstanceManager {
          }
  
          // Folia - region threading
@@ -275,10 +262,10 @@ index 6ef0042a355c65262bdb89dcf151bd644653216d..df91cc770475110e02ffc57b6229e202
          // Folia end - block plugins not marked as supported
          // Copied from SimplePluginManager#loadPlugins
 diff --git a/src/main/java/io/papermc/paper/util/MCUtil.java b/src/main/java/io/papermc/paper/util/MCUtil.java
-index 0ef9ddb8e409d4fbef270b3ea375c2362c5aa9ee..882e1155308ae651e3ed94dd3c8ca0b4231e6332 100644
+index 08367eaa9f93d6213502d76be2acfe95c723c556..5259bc11f28a48cb4a3c5f87f01609ac8e59e177 100644
 --- a/src/main/java/io/papermc/paper/util/MCUtil.java
 +++ b/src/main/java/io/papermc/paper/util/MCUtil.java
-@@ -126,6 +126,12 @@ public final class MCUtil {
+@@ -111,6 +111,12 @@ public final class MCUtil {
       */
      public static void ensureMain(String reason, Runnable run) {
          if (!isMainThread()) {
@@ -292,10 +279,10 @@ index 0ef9ddb8e409d4fbef270b3ea375c2362c5aa9ee..882e1155308ae651e3ed94dd3c8ca0b4
              if (reason != null) {
                  MinecraftServer.LOGGER.warn("Asynchronous " + reason + "!", new IllegalStateException());
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-index 2cc1b8c44e1f76f3e058d631f101aa06ee5edc2a..353bdea98609475cbd0c281ce1d290dd3b9f80f4 100644
+index 9583ff67f17f60883f0c0564eb95c700c85674b4..a8b2d917f12aafd982edaa9a9d431ee3a0a2c993 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-@@ -2754,6 +2754,11 @@ public final class CraftServer implements Server {
+@@ -2742,6 +2742,11 @@ public final class CraftServer implements Server {
                  task = io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentRegion().getData().getRegionSchedulingHandle();
              }
          }
@@ -307,7 +294,7 @@ index 2cc1b8c44e1f76f3e058d631f101aa06ee5edc2a..353bdea98609475cbd0c281ce1d290dd
          if (!(task instanceof io.papermc.paper.threadedregions.TickRegionScheduler.RegionScheduleHandle tickHandle)) {
              throw new UnsupportedOperationException("Not on any region");
          }
-@@ -2827,6 +2832,11 @@ public final class CraftServer implements Server {
+@@ -2815,6 +2820,11 @@ public final class CraftServer implements Server {
                  task = io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentRegion().getData().getRegionSchedulingHandle();
              }
          }
@@ -320,10 +307,10 @@ index 2cc1b8c44e1f76f3e058d631f101aa06ee5edc2a..353bdea98609475cbd0c281ce1d290dd
              throw new UnsupportedOperationException("Not on any region");
          }
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
-index bbf0a2a3266f39519d37cefae81ab871eaa90d20..e8e09cf838165ea701fa9a70ab4b89a17cc0ba07 100644
+index d43b1a6e6a8ac2a21b0a048e838115b0403170dd..5a022d18d67280a60b3bd9643a1e4fc8fd75ffa6 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
-@@ -325,6 +325,15 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
+@@ -305,6 +305,15 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
  
      protected boolean teleport0(Location location, TeleportCause cause, TeleportFlag... flags) {
          // Folia start - region threading
@@ -340,10 +327,10 @@ index bbf0a2a3266f39519d37cefae81ab871eaa90d20..e8e09cf838165ea701fa9a70ab4b89a1
              throw new UnsupportedOperationException("Must use teleportAsync while in region threading");
          }
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-index 24f7cf40ffd6bbb154dc664bc9f7e6661247f2ac..cf84af35d79ca161ce73a809b38b369e8d8486ba 100644
+index fbf31420cb83287c080c1832bccc167c81526563..0bd95ac5d2d172fbe07686e5385969d7e7b5a17d 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-@@ -1343,6 +1343,15 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
+@@ -1335,6 +1335,15 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
      @Override
      protected boolean teleport0(Location location, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause cause, io.papermc.paper.entity.TeleportFlag... flags) {
          // Folia start - region threading
@@ -447,10 +434,10 @@ index ab76c7f9bb0a4980a07a4d08c0d3ecadbca9668b..98eec199360f20ee468293bbc50f863e
          net.minecraft.world.scores.Scoreboard newBoard = scoreboard.getHandle();
          if (oldBoard == newBoard) {
 diff --git a/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java b/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
-index 3afdecc8ce6fdcfc1d13a1d210c842d0e40f09c4..66b67ea13d8ec0a2f6ebf97cab6b7fc3f67253a4 100644
+index c414da018d73baa0a2612772f45899b642ea3a5d..efbfd23002aa9f111bcd204a3ce8c7808889dcc1 100644
 --- a/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
 +++ b/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
-@@ -379,7 +379,7 @@ public final class CraftMagicNumbers implements UnsafeValues {
+@@ -376,7 +376,7 @@ public final class CraftMagicNumbers implements UnsafeValues {
          }
  
          // Folia start - block plugins not marked as supported
@@ -460,7 +447,7 @@ index 3afdecc8ce6fdcfc1d13a1d210c842d0e40f09c4..66b67ea13d8ec0a2f6ebf97cab6b7fc3
          }
          // Folia end - block plugins not marked as supported
 diff --git a/src/main/java/org/spigotmc/RestartCommand.java b/src/main/java/org/spigotmc/RestartCommand.java
-index f2be113d9032215b824e8189e137d3959ad37127..cf69840b031c003ce78fad4e5c252547fdb028b6 100644
+index 905dde12db8ac8dc0ff8ff6898867039e6e4e550..b7000c4af4ae1764691a81bea45e2a2f35742e82 100644
 --- a/src/main/java/org/spigotmc/RestartCommand.java
 +++ b/src/main/java/org/spigotmc/RestartCommand.java
 @@ -20,6 +20,13 @@ public class RestartCommand extends Command {
