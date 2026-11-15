@@ -51,3 +51,4 @@ Folia-API
 paper-api-generator
 
 !gradle/wrapper/gradle-wrapper.jar
+compat-test/real-server/

@@ -1,231 +1,152 @@
-<div align=center>
-    <img src="./folia.png">
-    <br /><br />
-    <p>Fork of <a href="https://github.com/PaperMC/Paper">Paper</a> which adds regionised multithreading to the dedicated server.</p>
+<div align="center">
+
+<a href="https://lumina.aruru.kr"><img src=".github/assets/banner.png" alt="Lumina" width="100%"></a>
+
+<br>
+
+[![Latest release](https://img.shields.io/github/v/release/aruru10313/Lumina?style=flat-square&label=release&color=8fb4ff&labelColor=15161c)](https://github.com/aruru10313/Lumina/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/aruru10313/Lumina/total?style=flat-square&color=8fb4ff&labelColor=15161c)](https://github.com/aruru10313/Lumina/releases)
+[![Build](https://img.shields.io/github/actions/workflow/status/aruru10313/Lumina/release.yml?style=flat-square&label=build&labelColor=15161c)](https://github.com/aruru10313/Lumina/actions/workflows/release.yml)
+[![License](https://img.shields.io/badge/license-GPLv3-8fb4ff?style=flat-square&labelColor=15161c)](PATCHES-LICENSE)
+[![Website](https://img.shields.io/badge/website-lumina.aruru.kr-c9a2ff?style=flat-square&labelColor=15161c)](https://lumina.aruru.kr)
+
+### **[⬇ 다운로드 / Download](https://lumina.aruru.kr/#download)** &nbsp;·&nbsp; [웹사이트 / Website](https://lumina.aruru.kr) &nbsp;·&nbsp; [동작 방식](LUMINA.md) &nbsp;·&nbsp; [문제 신고 / Issues](https://github.com/aruru10313/Lumina/issues)
+
 </div>
 
-## Overview
+> [!WARNING]
+> **비공식 프로젝트입니다. PaperMC에서 지원하지 않습니다.**
+> Lumina는 PaperMC(Paper·Folia 팀)와 관련이 없습니다. Lumina에서 생긴 문제를 Paper/Folia에 신고하지 말고 [이 저장소](https://github.com/aruru10313/Lumina/issues)에 알려 주세요.
+> <br>*Unofficial — not affiliated with or supported by PaperMC. Report issues here, not upstream.*
 
-Folia groups nearby loaded chunks to form an "independent region."
-See [the PaperMC documentation](https://docs.papermc.io/folia/reference/region-logic) for exact details on how Folia
-will group nearby chunks.
-Each independent region has its own tick loop, which is ticked at the
-regular Minecraft tickrate (20TPS). The tick loops are executed
-on a thread pool in parallel. There is no main thread anymore, 
-as each region effectively has its own "main thread" that executes
-the entire tick loop.
+<br>
 
-For a server with many spread out players, Folia will create many
-spread out regions and tick them all in parallel on a configurable sized
-threadpool. Thus, Folia should scale well for servers like this.
+## Lumina란?
 
-Folia is also its own project, this will not be merged into Paper
-for the foreseeable future. 
+**Folia 위에서 일반 플러그인도 그대로.**
+Lumina는 [Folia](https://github.com/PaperMC/Folia)를 기반으로 한 마인크래프트 서버입니다. 지역마다 병렬로 틱을 돌리는 Folia 구조는 그대로 두고, `folia-supported` 표시가 없는 Paper 플러그인도 로딩해서 안전하게 실행합니다.
 
-A more detailed but abstract overview: [Project overview](https://docs.papermc.io/folia/reference/overview).
+<table>
+<tr>
+<td width="33%" valign="top">
 
-## FAQ
+#### ⚡ 지역별 병렬 틱 유지
+Folia를 지원하는 플러그인과 월드는 원래처럼 지역마다 다른 스레드에서 돕니다. 성능 손해가 없습니다.
 
-### What server types can benefit from Folia?
-Server types that naturally spread players out, 
-like skyblock or SMP, will benefit the most from Folia. The server
-should have a sizeable player count, too.
+</td>
+<td width="33%" valign="top">
 
-### What hardware will Folia run best on?
-Ideally, at least 16 _cores_ (not threads).
+#### 🧩 일반 플러그인 호환
+`BukkitScheduler`, 동기 `teleport`, 스코어보드 API, 꺼져 있던 바닐라 명령어를 다시 쓸 수 있습니다.
 
-### How to best configure Folia?
-First, it is recommended that the world is pre-generated so that the number
-of chunk system worker threads required is reduced greatly.
+</td>
+<td width="33%" valign="top">
 
-The following is a _very rough_ estimation based off of the testing
-done before Folia was released on the test server we ran that
-had ~330 players peak. So, it is not exact and will require further tuning - 
-just take it as a starting point.
+#### 🔌 옵션 하나로 순정 Folia
+`-Dfolia.legacyCompat=false`를 주면 호환 모드가 꺼지고 Folia와 똑같이 동작합니다.
 
-The total number of cores on the machine available should be 
-taken into account. Then, allocate threads for: 
-- netty IO :~4 per 200-300 players
-- chunk system io threads: ~3 per 200-300 players
-- chunk system workers if pre-generated, ~2 per 200-300 players
-- There is no best guess for chunk system workers if not pre-generated, as
-  on the test server we ran we gave 16 threads but chunk generation was still
-  slow at ~300 players.
-- GC Settings: ???? But, GC settings _do_ allocate concurrent threads, and you need
-  to know exactly how many. This is typically through the `-XX:ConcGCThreads=n` flag. Do not
-  confuse this flag with `-XX:ParallelGCThreads=n`, as parallel GC threads only run when
-  the application is paused by GC and as such should not be taken into account.
+</td>
+</tr>
+</table>
 
-After all of that allocation, the remaining cores on the system until 80%
-allocation (total threads allocated < 80% of cpus available) can be
-allocated to tickthreads (under global config, threaded-regions.threads). 
+<details>
+<summary><b>English</b></summary>
+<br>
 
-The reason you should not allocate more than 80% of the cores is due to the
-fact that plugins or even the server may make use of additional threads 
-that you cannot configure or even predict.
+**Folia, with your regular plugins intact.** Lumina is a Minecraft server built on Folia. It keeps Folia's parallel, per-region ticking and also loads Paper plugins that lack `folia-supported`. Their synchronous code runs alone while every region is briefly paused (stop-the-world).
 
-Additionally, the above is all a rough guess based on player count, but
-it is very likely that the thread allocation will not be ideal, and you 
-will need to tune it based on usage of the threads that you end up seeing.
+- **Parallel region ticking:** Folia-ready plugins run exactly as on Folia, at no extra cost.
+- **Regular plugins work:** `BukkitScheduler`, sync `teleport`, the scoreboard API and previously disabled vanilla commands are back.
+- **One flag for stock Folia:** `-Dfolia.legacyCompat=false`.
 
-## Plugin compatibility
+</details>
 
-There is no more main thread. I expect _every_ single plugin
-that exists to require _some_ level of modification to function
-in Folia. Additionally, multithreading of _any kind_ introduces
-possible race conditions in plugin held data - so, there are bound
-to be changes that need to be made.
+<br>
 
-So, have your expectations for compatibility at 0.
+## 지원 버전
 
-## API plans
+| Minecraft | 상태 | Java |
+|:--|:--|:--|
+| **26.3** | ✅ [다운로드](https://lumina.aruru.kr/#v26.3) | 25+ |
+| 26.2 · 26.1 | 🛠 포팅 중 | 25+ |
+| 1.21.11 · 1.21.8 · 1.21.7 · 1.21.6 · 1.21.5 · 1.21.4 | ⏳ 예정 | 21+ |
+| 1.20.6 · 1.20.4 | ⏳ 예정 | 21+ / 17+ |
 
-Currently, there is a lot of API that relies on the main thread. 
-I expect basically zero plugins that are compatible with Paper to 
-be compatible with Folia. However, there are plans to add API that 
-would allow Folia plugins to be compatible with Paper.
+> Folia 원본이 있는 버전만 만들 수 있습니다. 최신 상태는 [웹사이트](https://lumina.aruru.kr/#download)에서 확인하세요.
 
-For example, the Bukkit Scheduler. The Bukkit Scheduler inherently
-relies on a single main thread. Folia's RegionScheduler and Folia's
-EntityScheduler allow scheduling of tasks to the "next tick" of whatever
-region "owns" either a location or an entity. These could be implemented
-on regular Paper, except they schedule to the main thread - in both cases,
-the execution of the task will occur on the thread that "owns" the
-location or entity. This concept applies in general, as the current Paper
-(single threaded) can be viewed as one giant "region" that encompasses
-all chunks in all worlds. 
+<br>
 
-It is not yet decided whether to add this API to Paper itself directly
-or to Paperlib.
+## 빠른 시작
 
-### The new rules
-
-First, Folia breaks many plugins. To aid users in figuring out which
-plugins work, only plugins that have been explicitly marked by the
-author(s) to work with Folia will be loaded. By placing
-"folia-supported: true" into the plugin's plugin.yml, plugin authors
-can mark their plugin as compatible with regionised multithreading.
-
-The other important rule is that the regions tick in _parallel_, and not 
-_concurrently_. They do not share data, they do not expect to share data,
-and sharing of data _will_ cause data corruption. 
-Code that is running in one region under no circumstance can 
-be accessing or modifying data that is in another region. Just 
-because multithreading is in the name, it doesn't mean that everything 
-is now thread-safe. In fact, there are only a _few_ things that were 
-made thread-safe to make this happen. As time goes on, the number 
-of thread context checks will only grow, even _if_ it comes at a 
-performance penalty - _nobody_ is going to use or develop for a 
-server platform that is buggy as hell, and the only way to 
-prevent and find these bugs is to make bad accesses fail _hard_ at the 
-source of the bad access.
-
-This means that Folia compatible plugins need to take advantage of 
-API like the RegionScheduler and the EntityScheduler to ensure 
-their code is running on the correct thread context.
-
-In general, it is safe to assume that a region owns chunk data
-in an approximate 8 chunks from the source of an event (i.e. player
-breaks block, can probably access 8 chunks around that block). But,
-this is not guaranteed - plugins should take advantage of upcoming
-thread-check API to ensure correct behavior.
-
-The only guarantee of thread-safety comes from the fact that a
-single region owns data in certain chunks - and if that region is
-ticking, then it has full access to that data. This data is 
-specifically entity/chunk/poi data, and is entirely unrelated
-to **ANY** plugin data.
-
-Normal multithreading rules apply to data that plugins store/access
-their own data or another plugin's - events/commands/etc. are called 
-in _parallel_ because regions are ticking in _parallel_ (we CANNOT 
-call them in a synchronous fashion, as this opens up deadlock issues 
-and would handicap performance). There are no easy ways out of this, 
-it depends solely on what data is being accessed. Sometimes a 
-concurrent collection (like ConcurrentHashMap) is enough, and often a 
-concurrent collection used carelessly will only _hide_ threading 
-issues, which then become near impossible to debug.
-
-### Current API additions
-
-To properly understand API additions, please read
-[Project overview](https://docs.papermc.io/folia/reference/overview).
-
-- RegionScheduler, AsyncScheduler, GlobalRegionScheduler, and EntityScheduler 
-  acting as a replacement for  the BukkitScheduler.
-  The entity scheduler is retrieved via Entity#getScheduler, and the
-  rest of the schedulers can be retrieved from the Bukkit/Server classes.
-- Bukkit#isOwnedByCurrentRegion to test if the current ticking region
-  owns positions/entities
-
-### Thread contexts for API
-
-To properly understand API additions, please read
-[Project overview](https://docs.papermc.io/folia/reference/overview).
-
-General rules of thumb:
-
-1. Commands for entities/players are called on the region which owns
-the entity/player. Console commands are executed on the global region.
-
-2. Events involving a single entity (i.e player breaks/places block) are
-called on the region owning entity. Events involving actions on an entity
-(such as entity damage) are invoked on the region owning the target entity.
-
-3. The async modifier for events is deprecated - all events
-fired from regions or the global region are considered _synchronous_, 
-even though there is no main thread anymore. 
-
-### Current broken API
-
-- Most API that interacts with portals / respawning players / some
-  player login API is broken.
-- ALL scoreboard API is considered broken (this is global state that
-  I've not figured out how to properly implement yet)
-- World loading/unloading
-- Entity#teleport. This will NEVER UNDER ANY CIRCUMSTANCE come back, 
-  use teleportAsync
-- Could be more
-
-### Planned API additions
-
-- Proper asynchronous events. This would allow the result of an event
-  to be completed later, on a different thread context. This is required
-  to implement some things like spawn position select, as asynchronous
-  chunk loads are required when accessing chunk data out-of-region.
-- World loading/unloading
-- More to come here
-
-### Planned API changes
-
-- Super aggressive thread checks across the board. This is absolutely
-  required to prevent plugin devs from shipping code that may randomly
-  break random parts of the server in entirely _undiagnosable_ manners.
-- More to come here
-
-### Maven information
-* Maven Repo (for folia-api):
-```xml
-<repository>
-    <id>papermc</id>
-    <url>https://repo.papermc.io/repository/maven-public/</url>
-</repository>
+```bash
+java -Xms4G -Xmx4G -jar lumina-1.20.4-b<빌드>.jar --nogui
 ```
-* Artifact Information:
-```xml
-<dependency>
-    <groupId>dev.folia</groupId>
-    <artifactId>folia-api</artifactId>
-    <version>1.20.1-R0.1-SNAPSHOT</version>
-    <scope>provided</scope>
-</dependency>
- ```
 
+처음 실행할 때 Mojang 서버 파일을 자동으로 받습니다. `eula.txt`에 동의한 뒤 다시 실행하세요.
 
-## License
-The PATCHES-LICENSE file describes the license for api & server patches,
-found in `./patches` and its subdirectories except when noted otherwise.
+| JVM 옵션 | 기본값 | 설명 |
+|:--|:--:|:--|
+| `-Dfolia.legacyCompat=false` | `true` | 호환 모드 전체를 끕니다 (순정 Folia) |
+| `-Dfolia.legacyCommands=false` | `true` | 다시 켠 명령어와 명령어 전역 실행만 끕니다 |
+| `-Dfolia.legacyCompat.slowWarnMs=100` | `100` | 전역 실행이 이 시간(ms)보다 길면 경고합니다 |
 
-The fork is based off of PaperMC's fork example found [here](https://github.com/PaperMC/paperweight-examples).
-As such, it contains modifications to it in this project, please see the repository for license information
-of modified files.
+<br>
+
+## 동작 방식
+
+```mermaid
+flowchart LR
+    P[플러그인 코드] --> Q{folia-supported?}
+    Q -- 예 --> R[지역 스레드에서<br>병렬 실행]
+    Q -- 아니오 --> S[runExclusive]
+    S --> T[모든 지역 틱을<br>안전점에서 멈춤]
+    T --> U[혼자 실행]
+    U --> V[지역 틱 재개]
+```
+
+| 상황 | 처리 |
+|:--|:--|
+| 일반 플러그인이 듣는 동기 이벤트 | 이벤트 전체를 `runExclusive`로 실행 |
+| `BukkitScheduler` 동기 작업 | 실행할 작업이 있는 전역 틱에만 `runExclusive` |
+| 비동기 작업 | 기존 Paper 방식 그대로 |
+| 모든 명령어, 일반 플러그인의 `onEnable` / `onDisable` | `runExclusive` 안에서 실행 |
+| 다른 지역의 블록 수정 / 엔티티 / teleport | 스레드의 현재 지역을 잠깐 바꿔서 실행 (`inRegionAt`) |
+
+자세한 내용: **[LUMINA.md](LUMINA.md)**
+
+<br>
+
+## 테스트 결과 (26.3)
+
+- **테스트 플러그인 `compat-test/`:** 11/11 PASS
+- **실제 플러그인 18개 동시 실행:** 전부 에러 없이 켜짐 (시작 18초)
+  - 호환 모드: Multiverse-Core, AdvancedPortals, NoLeavesDecay, URLCustomDiscs 외 비공개 플러그인
+  - Folia 지원: LuckPerms, WorldEdit, WorldGuard, PlaceholderAPI, packetevents, Oraxen, BetterModel
+
+> [!CAUTION]
+> 일반 플러그인이 많이 일할수록 서버가 단일 스레드처럼 느려집니다. NMS를 직접 건드리는 플러그인은 깨질 수 있습니다. **운영 서버에 쓰기 전에 꼭 백업하고 테스트 서버에서 확인하세요.**
+
+<br>
+
+## 직접 빌드하기
+
+```bash
+./gradlew applyPatches
+./gradlew createMojmapPaperclipJar
+# → folia-server/build/libs/folia-paperclip-*.jar
+```
+
+Java 17이 필요합니다. Windows에서는 `git config core.autocrlf false`와 git 사용자 정보가 필요합니다.
+`ver/*` 브랜치에 push하면 GitHub Actions가 빌드해서 [Releases](https://github.com/aruru10313/Lumina/releases)에 자동으로 올립니다.
+
+<br>
+
+---
+
+<div align="center">
+<sub>
+Lumina는 <a href="https://github.com/PaperMC/Folia">Folia</a>와 <a href="https://github.com/PaperMC/Paper">Paper</a>를 기반으로 한 비공식 포크이며, PaperMC와 관련이 없습니다.<br>
+패치 라이선스: <a href="PATCHES-LICENSE">GPLv3</a> · 원본 Folia 설명: <a href="README-FOLIA.md">README-FOLIA.md</a><br>
+Minecraft는 Mojang Studios의 상표입니다. · <a href="https://lumina.aruru.kr/privacy.html">개인정보처리방침</a> · <a href="https://lumina.aruru.kr/terms.html">이용 안내</a>
+</sub>
+</div>
