@@ -152,6 +152,18 @@ index 8b5293b0c696ef21d0101493ffa41b60bf0bc86b..3997ccd9410b2f960bda8e96806ed491
      private static Component getColor(double avg) {
          return text(DF.format(avg), avg >= 50 ? RED : avg >= 40 ? YELLOW : GREEN);
      }
+diff --git a/src/main/java/io/papermc/paper/command/PaperCommands.java b/src/main/java/io/papermc/paper/command/PaperCommands.java
+index 7f88caf7ca1be6e83c144bebe4221b020f74b4e0..28f53750663c02a83ee7e1aa6d5491d74cfdbcfe 100644
+--- a/src/main/java/io/papermc/paper/command/PaperCommands.java
++++ b/src/main/java/io/papermc/paper/command/PaperCommands.java
+@@ -19,6 +19,7 @@ public final class PaperCommands {
+         COMMANDS.put("paper", new PaperCommand("paper"));
+         COMMANDS.put("callback", new CallbackCommand("callback"));
+         COMMANDS.put("tps", new io.papermc.paper.threadedregions.commands.CommandServerHealth()); // Folia - region threading
++        if (io.papermc.paper.threadedregions.LegacyCompat.COMMANDS) COMMANDS.put("mspt", new MSPTCommand("mspt")); // Folia-Compat - /mspt re-enabled, region aware
+         COMMANDS.put("profiler", new io.papermc.paper.threadedregions.commands.CommandProfiler()); // Folia - region threading - profiler
+     }
+ 
 diff --git a/src/main/java/io/papermc/paper/plugin/manager/PaperEventManager.java b/src/main/java/io/papermc/paper/plugin/manager/PaperEventManager.java
 index 7ce9ebba8ce304d1f3f21d4f15ee5f3560d7700b..23a16fa4a8f3b3e24b65eeb345f95ecee6dd587d 100644
 --- a/src/main/java/io/papermc/paper/plugin/manager/PaperEventManager.java
