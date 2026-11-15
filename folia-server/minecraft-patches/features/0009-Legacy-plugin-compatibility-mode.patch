@@ -1,11 +1,11 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: aruru10313 <195274207+aruru10313@users.noreply.github.com>
-Date: Sun, 15 Nov 2026 19:26:49 +0900
+Date: Sun, 15 Nov 2026 19:46:43 +0900
 Subject: [PATCH] Legacy plugin compatibility mode
 
 
 diff --git a/ca/spottedleaf/moonrise/paper/util/BaseChunkSystemHooks.java b/ca/spottedleaf/moonrise/paper/util/BaseChunkSystemHooks.java
-index 52dcbcf64c3a510d4a4524b7d0ee226d9a73511d..f3ff47032ac3d9c7909acb5887266de247f87ab1 100644
+index 874ffbcc0263ded98462a9fd2529e9a877ab8900..dbe9809733a24508828289c6454101f78322ce9b 100644
 --- a/ca/spottedleaf/moonrise/paper/util/BaseChunkSystemHooks.java
 +++ b/ca/spottedleaf/moonrise/paper/util/BaseChunkSystemHooks.java
 @@ -95,13 +95,13 @@ public abstract class BaseChunkSystemHooks implements ca.spottedleaf.moonrise.co
@@ -56,7 +56,7 @@ index 52dcbcf64c3a510d4a4524b7d0ee226d9a73511d..f3ff47032ac3d9c7909acb5887266de2
      }
  
 diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/level/entity/EntityLookup.java b/ca/spottedleaf/moonrise/patches/chunk_system/level/entity/EntityLookup.java
-index 04006b6dd72d87ea4f3bec7df0e2ae8edc74e461..8d13b9d2f279a74c5dba3b91acae28006dbaf570 100644
+index 20941198b3a1227381c0a9039898a6506344a588..3b7adee0309acbb1d4cb29b98b528ffbe94ece79 100644
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/level/entity/EntityLookup.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/level/entity/EntityLookup.java
 @@ -1005,7 +1005,7 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
@@ -82,7 +82,7 @@ index b31b55f00e2ce1bd6c1011fe852bd1dbb37de524..d7cc8f7bab16ea0e9530ca9c1764fccb
              ((ChunkSystemServerLevel)this.serverWorld).moonrise$getNearbyPlayers().addPlayer(player);
          }
 diff --git a/io/papermc/paper/threadedregions/RegionizedServer.java b/io/papermc/paper/threadedregions/RegionizedServer.java
-index d5ff949f4f459c4358b0130cd20f8ed9cf24b42d..2b3f1a8ce5c8a60bade19f8fdce8e57e367841eb 100644
+index 17108636a5728efe98a064001e00e3ca098b1f51..5f5a0a50ceff4b3a93a34dccbf21c3530f301df0 100644
 --- a/io/papermc/paper/threadedregions/RegionizedServer.java
 +++ b/io/papermc/paper/threadedregions/RegionizedServer.java
 @@ -67,9 +67,10 @@ public final class RegionizedServer {
@@ -111,8 +111,8 @@ index d5ff949f4f459c4358b0130cd20f8ed9cf24b42d..2b3f1a8ce5c8a60bade19f8fdce8e57e
          ((FoliaGlobalRegionScheduler)Bukkit.getGlobalRegionScheduler()).tick();
 +        LegacyCompat.tickLegacyScheduler(); // Folia-Compat - legacy BukkitScheduler sync tasks
  
-         // clock tick
-         this.tickClocks();
+         // commands
+         ((DedicatedServer)MinecraftServer.getServer()).handleConsoleInputs();
 diff --git a/io/papermc/paper/threadedregions/TickRegionScheduler.java b/io/papermc/paper/threadedregions/TickRegionScheduler.java
 index 439c5a222fcf51c9dc5bfef9cdb23f419fffc28c..af9fb6baffda6663b4f9dc2dd77c78ebdd563bc6 100644
 --- a/io/papermc/paper/threadedregions/TickRegionScheduler.java
@@ -253,10 +253,10 @@ index b75293fea5dc029374c1c03361e859f0ddb58e83..3632d7f3d3da09ada8815fc1b12606c7
          }
      }
 diff --git a/net/minecraft/commands/Commands.java b/net/minecraft/commands/Commands.java
-index 1e1cb2aaec7037d16f3e91092e013c06bb1a7065..526b947afa6723a09c327e04746ab18ac961b973 100644
+index c859197d643fd96ea2a5ef51837abc457e27f002..ebb2e89ff6f81c217f6b9507dc62cf6b6a16c865 100644
 --- a/net/minecraft/commands/Commands.java
 +++ b/net/minecraft/commands/Commands.java
-@@ -198,15 +198,15 @@ public class Commands {
+@@ -196,15 +196,15 @@ public class Commands {
          AdvancementCommands.register(this.dispatcher);
          AttributeCommand.register(this.dispatcher, context);
          ExecuteCommand.register(this.dispatcher, context);
@@ -277,7 +277,7 @@ index 1e1cb2aaec7037d16f3e91092e013c06bb1a7065..526b947afa6723a09c327e04746ab18a
          DifficultyCommand.register(this.dispatcher);
          EffectCommands.register(this.dispatcher, context);
          EmoteCommands.register(this.dispatcher);
-@@ -215,17 +215,17 @@ public class Commands {
+@@ -213,17 +213,17 @@ public class Commands {
          FillCommand.register(this.dispatcher, context);
          FillBiomeCommand.register(this.dispatcher, context);
          ForceLoadCommand.register(this.dispatcher);
@@ -296,9 +296,9 @@ index 1e1cb2aaec7037d16f3e91092e013c06bb1a7065..526b947afa6723a09c327e04746ab18a
 -        //LootCommand.register(this.dispatcher, context); // Folia - region threading - TODO later
 +        if (io.papermc.paper.threadedregions.LegacyCompat.COMMANDS) LootCommand.register(this.dispatcher, context); // Folia - region threading - TODO later // Folia-Compat - re-enabled, runs in legacy exclusive section
          MsgCommand.register(this.dispatcher);
-         SwingCommand.register(this.dispatcher);
          ParticleCommand.register(this.dispatcher, context);
-@@ -235,33 +235,33 @@ public class Commands {
+         PlaceCommand.register(this.dispatcher);
+@@ -232,33 +232,33 @@ public class Commands {
          //ReloadCommand.register(this.dispatcher); // Folia - region threading
          RecipeCommand.register(this.dispatcher);
          FetchProfileCommand.register(this.dispatcher);
@@ -311,8 +311,8 @@ index 1e1cb2aaec7037d16f3e91092e013c06bb1a7065..526b947afa6723a09c327e04746ab18a
 -        //ScoreboardCommand.register(this.dispatcher, context); // Folia - region threading
 +        if (io.papermc.paper.threadedregions.LegacyCompat.COMMANDS) ScheduleCommand.register(this.dispatcher); // Folia - region threading // Folia-Compat - re-enabled, runs in legacy exclusive section
 +        if (io.papermc.paper.threadedregions.LegacyCompat.COMMANDS) ScoreboardCommand.register(this.dispatcher, context); // Folia - region threading // Folia-Compat - re-enabled, runs in legacy exclusive section
-         SeedCommand.register(this.dispatcher, commandSelection != Commands.CommandSelection.INTEGRATED);
-         VersionCommand.register(this.dispatcher, commandSelection != Commands.CommandSelection.INTEGRATED);
+         SeedCommand.register(this.dispatcher, selection != Commands.CommandSelection.INTEGRATED);
+         VersionCommand.register(this.dispatcher, selection != Commands.CommandSelection.INTEGRATED);
          SetBlockCommand.register(this.dispatcher, context);
          SetSpawnCommand.register(this.dispatcher);
          SetWorldSpawnCommand.register(this.dispatcher);
@@ -334,7 +334,7 @@ index 1e1cb2aaec7037d16f3e91092e013c06bb1a7065..526b947afa6723a09c327e04746ab18a
          //TestCommand.register(this.dispatcher, context); // Folia - region threading
 -        //TickCommand.register(this.dispatcher); // Folia - region threading - TODO later
 +        if (io.papermc.paper.threadedregions.LegacyCompat.COMMANDS) TickCommand.register(this.dispatcher); // Folia - region threading - TODO later // Folia-Compat - re-enabled, runs in legacy exclusive section
-         TimeCommand.register(this.dispatcher, context);
+         TimeCommand.register(this.dispatcher);
          TitleCommand.register(this.dispatcher, context);
 -        //TriggerCommand.register(this.dispatcher); // Folia - region threading - TODO later
 -        //WaypointCommand.register(this.dispatcher, context); // Folia - region threading - TODO later
@@ -343,16 +343,16 @@ index 1e1cb2aaec7037d16f3e91092e013c06bb1a7065..526b947afa6723a09c327e04746ab18a
          WeatherCommand.register(this.dispatcher);
          WorldBorderCommand.register(this.dispatcher);
          if (JvmProfiler.INSTANCE.isAvailable()) {
-@@ -374,12 +374,19 @@ public class Commands {
+@@ -371,12 +371,19 @@ public class Commands {
  
          try {
-             if (commandChain != null) {
+             if (contextChain != null) {
 -                executeCommandInContext(
 +                // Folia-Compat start - commands run while all regions are paused, so cross-region commands are safe
 +                final Runnable execute = () -> executeCommandInContext(
-                     sender,
+                     commandSourceStack,
                      executionContext -> ExecutionContext.queueInitialCommandExecution(
-                         executionContext, commandString, commandChain, sender, CommandResultCallback.EMPTY
+                         executionContext, command, contextChain, commandSourceStack, CommandResultCallback.EMPTY
                      )
                  );
 +                if (io.papermc.paper.threadedregions.LegacyCompat.COMMANDS) {
@@ -365,10 +365,10 @@ index 1e1cb2aaec7037d16f3e91092e013c06bb1a7065..526b947afa6723a09c327e04746ab18a
              // Paper start
          } catch (Throwable var12) { // always gracefully handle it, no matter how bad:tm:
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index 8ec86d7485efbb275c85d8226ea93a7bbd72342c..f1bb83b0f23d93cba852223dd899a2120f3ede38 100644
+index 01758ab2084c0b2d6a10d427ddf0e63753a64bdc..e0a9896d1c976a06195f5b18b8a70eadad74c5e3 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
-@@ -703,6 +703,12 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -660,6 +660,12 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
              collideTeam.setSeeFriendlyInvisibles(false); // Because we want to mimic them not being on a team at all
          }
          // Paper end - Configurable player collision; Handle collideRule team for player collision toggle
@@ -382,10 +382,10 @@ index 8ec86d7485efbb275c85d8226ea93a7bbd72342c..f1bb83b0f23d93cba852223dd899a212
          this.server.spark.registerCommandBeforePlugins(this.server); // Paper - spark
          this.server.spark.enableAfterPlugins(this.server); // Paper - spark
 diff --git a/net/minecraft/server/level/ServerChunkCache.java b/net/minecraft/server/level/ServerChunkCache.java
-index 022593220923b28d61b458bee827d21be4dd2f2c..97c39cce64df5c2be17428b894dcf2acfb09be51 100644
+index 7400be75c5dae2b24cc327d23b703bf686ff2e5b..08d6fe704ba823a75708617f0754c2dbc9410901 100644
 --- a/net/minecraft/server/level/ServerChunkCache.java
 +++ b/net/minecraft/server/level/ServerChunkCache.java
-@@ -104,6 +104,20 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+@@ -105,6 +105,20 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
          // Folia end - region threading
          final ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler chunkTaskScheduler = ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler();
          final CompletableFuture<ChunkAccess> completable = new CompletableFuture<>();
@@ -407,13 +407,13 @@ index 022593220923b28d61b458bee827d21be4dd2f2c..97c39cce64df5c2be17428b894dcf2ac
              chunkX, chunkZ, toStatus, true, ca.spottedleaf.concurrentutil.util.Priority.BLOCKING,
              completable::complete
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index a51a9e7a0fa5727690046d814eb0b26d5742cd74..5dbb23215869f255baa35c82d6f7093abb7f9e9a 100644
+index 3471200d54b938ef82f142efc2fcb096d72ec7b4..a831b7b28a7f478397cd96ebd3b6a8de57de8fe9 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
-@@ -1770,6 +1770,16 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
+@@ -1727,6 +1727,16 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
  
      // CraftBukkit start
-     private boolean addEntity(final Entity entity, final org.bukkit.event.entity.CreatureSpawnEvent.@Nullable SpawnReason spawnReason) {
+     private boolean addEntity(Entity entity, org.bukkit.event.entity.CreatureSpawnEvent.@Nullable SpawnReason spawnReason) {
 +        // Folia-Compat start - legacy exclusive sections add entities in the context of the owning region
 +        if (io.papermc.paper.threadedregions.LegacyCompat.isExclusiveOwner()) {
 +            return io.papermc.paper.threadedregions.LegacyCompat.inRegionAt(this, entity.getBlockX() >> 4, entity.getBlockZ() >> 4,
@@ -422,47 +422,47 @@ index a51a9e7a0fa5727690046d814eb0b26d5742cd74..5dbb23215869f255baa35c82d6f7093a
 +        return this.addEntity0(entity, spawnReason);
 +    }
 +
-+    private boolean addEntity0(final Entity entity, final org.bukkit.event.entity.CreatureSpawnEvent.@Nullable SpawnReason spawnReason) {
++    private boolean addEntity0(Entity entity, org.bukkit.event.entity.CreatureSpawnEvent.@Nullable SpawnReason spawnReason) {
 +        // Folia-Compat end - legacy exclusive sections add entities in the context of the owning region
          org.spigotmc.AsyncCatcher.catchOp("entity add"); // Spigot
          entity.generation = false; // Paper - Don't fire sync event during generation; Reset flag if it was added during a ServerLevel generation process
          // Paper start - extra debug info
-@@ -2179,7 +2189,7 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
+@@ -2118,7 +2128,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
  
      @Override
-     public void blockEvent(final BlockPos pos, final Block block, final int b0, final int b1) {
--        this.getCurrentWorldData().pushBlockEvent(new BlockEventData(pos, block, b0, b1)); // Folia - regionised ticking
-+        this.getCurrentWorldData(pos.getX() >> 4, pos.getZ() >> 4).pushBlockEvent(new BlockEventData(pos, block, b0, b1)); // Folia - regionised ticking // Folia-Compat
+     public void blockEvent(BlockPos pos, Block block, int eventId, int eventParam) {
+-        this.getCurrentWorldData().pushBlockEvent(new BlockEventData(pos, block, eventId, eventParam)); // Folia - regionised ticking
++        this.getCurrentWorldData(pos.getX() >> 4, pos.getZ() >> 4).pushBlockEvent(new BlockEventData(pos, block, eventId, eventParam)); // Folia - regionised ticking // Folia-Compat
      }
  
      private void runBlockEvents() {
-@@ -3010,12 +3020,12 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
+@@ -2892,12 +2902,12 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
          @Override
-         public void onTickingStart(final Entity entity) {
+         public void onTickingStart(Entity entity) {
              if (entity instanceof net.minecraft.world.entity.Marker && !paperConfig().entities.markers.tick) return; // Paper - Configurable marker ticking
 -            ServerLevel.this.getCurrentWorldData().addEntityTickingEntity(entity); // Folia - region threading
 +            ServerLevel.this.getCurrentWorldData(entity).addEntityTickingEntity(entity); // Folia-Compat // Folia - region threading
          }
  
          @Override
-         public void onTickingEnd(final Entity entity) {
+         public void onTickingEnd(Entity entity) {
 -            ServerLevel.this.getCurrentWorldData().removeEntityTickingEntity(entity); // Folia - region threading
 +            ServerLevel.this.getCurrentWorldData(entity).removeEntityTickingEntity(entity); // Folia-Compat // Folia - region threading
              // Paper start - Reset pearls when they stop being ticked
              if (ServerLevel.this.paperConfig().fixes.disableUnloadedChunkEnderpearlExploit && ServerLevel.this.paperConfig().misc.legacyEnderPearlBehavior && entity instanceof net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl pearl) {
                  pearl.setOwner(null);
-@@ -3026,7 +3036,7 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
+@@ -2908,7 +2918,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
          @Override
-         public void onTrackingStart(final Entity entity) {
+         public void onTrackingStart(Entity entity) {
              org.spigotmc.AsyncCatcher.catchOp("entity register"); // Spigot
 -            ServerLevel.this.getCurrentWorldData().addLoadedEntity(entity); // Folia - region threading
 +            ServerLevel.this.getCurrentWorldData(entity).addLoadedEntity(entity); // Folia-Compat // Folia - region threading
              // ServerLevel.this.getChunkSource().addEntity(entity); // Paper - ignore and warn about illegal addEntity calls instead of crashing server; moved down below valid=true
-             if (entity instanceof ServerPlayer player) {
-                 ServerLevel.this.players.add(player);
-@@ -3077,7 +3087,7 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
+             if (entity instanceof ServerPlayer serverPlayer) {
+                 ServerLevel.this.players.add(serverPlayer);
+@@ -2959,7 +2969,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
          @Override
-         public void onTrackingEnd(final Entity entity) {
+         public void onTrackingEnd(Entity entity) {
              org.spigotmc.AsyncCatcher.catchOp("entity unregister"); // Spigot
 -            ServerLevel.this.getCurrentWorldData().removeLoadedEntity(entity); // Folia - region threading
 +            ServerLevel.this.getCurrentWorldData(entity).removeLoadedEntity(entity); // Folia-Compat // Folia - region threading
@@ -470,10 +470,10 @@ index a51a9e7a0fa5727690046d814eb0b26d5742cd74..5dbb23215869f255baa35c82d6f7093a
              if (entity instanceof Player player) {
                  for (final ServerLevel level : ServerLevel.this.getServer().getAllLevels()) {
 diff --git a/net/minecraft/world/level/Level.java b/net/minecraft/world/level/Level.java
-index 35305205047240dc91ed1bb60e742411a76e2a22..c6a247ddfff5dbee058aa8e0690187697992d5d6 100644
+index 2c3d36a9d4bf361c516fe1fe6e29d225002b303c..e22d2297da14054a5104f3e15128ceeefa9d6077 100644
 --- a/net/minecraft/world/level/Level.java
 +++ b/net/minecraft/world/level/Level.java
-@@ -826,6 +826,11 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
+@@ -821,6 +821,11 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
  
      public io.papermc.paper.threadedregions.RegionizedWorldData getCurrentWorldData() {
          final io.papermc.paper.threadedregions.RegionizedWorldData ret = io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentRegionizedWorldData();
@@ -485,7 +485,7 @@ index 35305205047240dc91ed1bb60e742411a76e2a22..c6a247ddfff5dbee058aa8e069018769
          if (ret == null) {
              return ret;
          }
-@@ -836,6 +841,27 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
+@@ -831,6 +836,27 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
          return ret;
      }
  
@@ -513,20 +513,20 @@ index 35305205047240dc91ed1bb60e742411a76e2a22..c6a247ddfff5dbee058aa8e069018769
      @Override
      public List<net.minecraft.server.level.ServerPlayer> getLocalPlayers() {
          return this.getCurrentWorldData().getLocalPlayers();
-@@ -1072,6 +1098,16 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
+@@ -1065,6 +1091,16 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
  
      @Override
-     public boolean setBlock(final BlockPos pos, final BlockState blockState, @Block.UpdateFlags final int updateFlags, final int updateLimit) {
+     public boolean setBlock(BlockPos pos, BlockState state, @Block.UpdateFlags int flags, int recursionLeft) {
 +        // Folia-Compat start - resolve region data for this position while in a legacy exclusive section
 +        if (io.papermc.paper.threadedregions.LegacyCompat.isExclusiveOwner() && this instanceof net.minecraft.server.level.ServerLevel serverLevel) {
 +            return io.papermc.paper.threadedregions.LegacyCompat.inRegionAt(serverLevel, pos.getX() >> 4, pos.getZ() >> 4,
-+                () -> this.setBlock0(pos, blockState, updateFlags, updateLimit));
++                () -> this.setBlock0(pos, state, flags, recursionLeft));
 +        }
-+        return this.setBlock0(pos, blockState, updateFlags, updateLimit);
++        return this.setBlock0(pos, state, flags, recursionLeft);
 +    }
 +
-+    private boolean setBlock0(final BlockPos pos, final BlockState blockState, @Block.UpdateFlags final int updateFlags, final int updateLimit) {
++    private boolean setBlock0(BlockPos pos, BlockState state, @Block.UpdateFlags int flags, int recursionLeft) {
 +        // Folia-Compat end - resolve region data for this position while in a legacy exclusive section
          ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread((ServerLevel)this, pos, "Updating block asynchronously"); // Folia - region threading
-         final io.papermc.paper.threadedregions.RegionizedWorldData worldData = this.getCurrentWorldData(); // Folia - region threading
+         io.papermc.paper.threadedregions.RegionizedWorldData worldData = this.getCurrentWorldData(); // Folia - region threading
          // CraftBukkit start - tree generation
