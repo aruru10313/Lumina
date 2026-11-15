@@ -1,6 +1,6 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: aruru10313 <195274207+aruru10313@users.noreply.github.com>
-Date: Sun, 15 Nov 2026 19:49:09 +0900
+Date: Sun, 15 Nov 2026 20:10:42 +0900
 Subject: [PATCH] Legacy plugin compatibility mode
 
 
@@ -102,10 +102,10 @@ index d543b1b107ab8d3eeb1fc3c1cadf489928d2786e..1331cb061e0eaccb9dff5e95bd1519b7
  
          Main.main(options);
 diff --git a/src/main/java/io/papermc/paper/command/MSPTCommand.java b/src/main/java/io/papermc/paper/command/MSPTCommand.java
-index 04b8097b147350f97fdee16c0b8aa78a87fddd33..0f5ad7190f4235a0ba91960ecbabe06d3b3b6594 100644
+index 8b5293b0c696ef21d0101493ffa41b60bf0bc86b..3997ccd9410b2f960bda8e96806ed4912e883186 100644
 --- a/src/main/java/io/papermc/paper/command/MSPTCommand.java
 +++ b/src/main/java/io/papermc/paper/command/MSPTCommand.java
-@@ -46,12 +46,17 @@ public final class MSPTCommand extends Command {
+@@ -42,12 +42,17 @@ public final class MSPTCommand extends Command {
      public boolean execute(CommandSender sender, String commandLabel, String[] args) {
          if (!testPermission(sender)) return true;
  
@@ -117,17 +117,17 @@ index 04b8097b147350f97fdee16c0b8aa78a87fddd33..0f5ad7190f4235a0ba91960ecbabe06d
 +        final long now = System.nanoTime();
  
          List<Component> times = new ArrayList<>();
--        times.addAll(eval(server.tickTimes5s));
--        times.addAll(eval(server.tickTimes10s));
--        times.addAll(eval(server.tickTimes1m));
-+        times.addAll(eval(handle.getTickReport5s(now)));
-+        times.addAll(eval(handle.getTickReport15s(now)));
-+        times.addAll(eval(handle.getTickReport1m(now)));
+-        times.addAll(eval(server.tickTimes5s.getTimes()));
+-        times.addAll(eval(server.tickTimes10s.getTimes()));
+-        times.addAll(eval(server.tickTimes60s.getTimes()));
++        times.addAll(evalRegion(handle.getTickReport5s(now)));
++        times.addAll(evalRegion(handle.getTickReport15s(now)));
++        times.addAll(evalRegion(handle.getTickReport1m(now)));
 +        // Folia-Compat end - report the tick times of the sender's region (or the global region for the console)
  
          sender.sendMessage(text().content("Server tick times ").color(GOLD)
              .append(text().color(YELLOW)
-@@ -67,7 +72,7 @@ public final class MSPTCommand extends Command {
+@@ -63,7 +68,7 @@ public final class MSPTCommand extends Command {
              ).append(
                  text(" from last 5s"),
                  text(",", GRAY),
@@ -136,21 +136,22 @@ index 04b8097b147350f97fdee16c0b8aa78a87fddd33..0f5ad7190f4235a0ba91960ecbabe06d
                  text(",", GRAY),
                  text(" 1m"),
                  text(":", YELLOW)
-@@ -85,8 +90,13 @@ public final class MSPTCommand extends Command {
-         return true;
+@@ -96,6 +101,15 @@ public final class MSPTCommand extends Command {
+         return Arrays.asList(getColor(avgD), getColor(minD), getColor(maxD));
      }
  
 +    // Folia-Compat start - region aware
-     private static List<Component> eval(TickData tickData) {
--        TickData.TickReportData reportData = tickData.generateTickReport(null, System.nanoTime(), MinecraftServer.getServer().tickRateManager().nanosecondsPerTick());
-+        return eval(tickData.generateTickReport(null, System.nanoTime(), MinecraftServer.getServer().tickRateManager().nanosecondsPerTick()));
++    private static List<Component> evalRegion(final io.papermc.paper.threadedregions.TickData.TickReportData reportData) {
++        double avgD = reportData == null ? 0.0 : reportData.timePerTickData().segmentAll().average() * 1.0E-6D;
++        double minD = reportData == null ? 0.0 : reportData.timePerTickData().segmentAll().least() * 1.0E-6D;
++        double maxD = reportData == null ? 0.0 : reportData.timePerTickData().segmentAll().greatest() * 1.0E-6D;
++        return Arrays.asList(getColor(avgD), getColor(minD), getColor(maxD));
 +    }
-+
-+    private static List<Component> eval(final TickData.TickReportData reportData) {
 +    // Folia-Compat end - region aware
-         double avgD = reportData == null ? 0.0 : reportData.timePerTickData().segmentAll().average() * 1.0E-6D;
-         double minD = reportData == null ? 0.0 : reportData.timePerTickData().segmentAll().least() * 1.0E-6D;
-         double maxD = reportData == null ? 0.0 : reportData.timePerTickData().segmentAll().greatest() * 1.0E-6D;
++
+     private static Component getColor(double avg) {
+         return text(DF.format(avg), avg >= 50 ? RED : avg >= 40 ? YELLOW : GREEN);
+     }
 diff --git a/src/main/java/io/papermc/paper/plugin/manager/PaperEventManager.java b/src/main/java/io/papermc/paper/plugin/manager/PaperEventManager.java
 index 7ce9ebba8ce304d1f3f21d4f15ee5f3560d7700b..23a16fa4a8f3b3e24b65eeb345f95ecee6dd587d 100644
 --- a/src/main/java/io/papermc/paper/plugin/manager/PaperEventManager.java
@@ -183,10 +184,10 @@ index 7ce9ebba8ce304d1f3f21d4f15ee5f3560d7700b..23a16fa4a8f3b3e24b65eeb345f95ece
              if (!registration.getPlugin().isEnabled()) {
                  continue;
 diff --git a/src/main/java/io/papermc/paper/plugin/manager/PaperPluginInstanceManager.java b/src/main/java/io/papermc/paper/plugin/manager/PaperPluginInstanceManager.java
-index 578102113c2034ed220a4753ee5b69e0270321ce..5897d4a5e7c7db51d6668c08456e71a7a65d1d00 100644
+index 9a00f8e963ce73144e7b7ab452d602f98a8154ad..c4f33eb7e0871fa078ebbabd763a7157ccfe145b 100644
 --- a/src/main/java/io/papermc/paper/plugin/manager/PaperPluginInstanceManager.java
 +++ b/src/main/java/io/papermc/paper/plugin/manager/PaperPluginInstanceManager.java
-@@ -204,6 +204,11 @@ class PaperPluginInstanceManager {
+@@ -199,6 +199,11 @@ class PaperPluginInstanceManager {
              } // Paper
  
              try {
@@ -198,7 +199,7 @@ index 578102113c2034ed220a4753ee5b69e0270321ce..5897d4a5e7c7db51d6668c08456e71a7
                  jPlugin.setEnabled(true);
              } catch (Throwable ex) {
                  this.server.getLogger().log(Level.SEVERE, "Error occurred while enabling " + plugin.getPluginMeta().getDisplayName() + " (Is it up to date?)", ex);
-@@ -239,6 +244,11 @@ class PaperPluginInstanceManager {
+@@ -234,6 +239,11 @@ class PaperPluginInstanceManager {
  
              this.server.getPluginManager().callEvent(new PluginDisableEvent(plugin));
              try {
@@ -210,7 +211,7 @@ index 578102113c2034ed220a4753ee5b69e0270321ce..5897d4a5e7c7db51d6668c08456e71a7
                  javaPlugin.setEnabled(false);
              } catch (Throwable ex) {
                  this.server.getLogger().log(Level.SEVERE, "Error occurred while disabling " + pluginName, ex);
-@@ -266,6 +276,16 @@ class PaperPluginInstanceManager {
+@@ -257,6 +267,16 @@ class PaperPluginInstanceManager {
          }
  
          // Folia - region threading
@@ -262,10 +263,10 @@ index 335058589eeba934105bea31a0c3aea2293a5597..b0bb7a487179a2fe1cc653a116b6ac5f
          // Folia end - block plugins not marked as supported
          // Copied from SimplePluginManager#loadPlugins
 diff --git a/src/main/java/io/papermc/paper/util/MCUtil.java b/src/main/java/io/papermc/paper/util/MCUtil.java
-index 6b3bfe5f1b7e02e5f91406e7bbc53974fe801af3..43f61dda81e1a23aeb3df42b66cf9cc0933468df 100644
+index ff6d200c3c3ecb958086f11dff39357dc0bf70fc..ace539010a8e6905959ae96451a0127eb72760c9 100644
 --- a/src/main/java/io/papermc/paper/util/MCUtil.java
 +++ b/src/main/java/io/papermc/paper/util/MCUtil.java
-@@ -111,6 +111,12 @@ public final class MCUtil {
+@@ -94,6 +94,12 @@ public final class MCUtil {
       */
      public static void ensureMain(String reason, Runnable run) {
          if (!isMainThread()) {
@@ -279,10 +280,10 @@ index 6b3bfe5f1b7e02e5f91406e7bbc53974fe801af3..43f61dda81e1a23aeb3df42b66cf9cc0
              if (reason != null) {
                  MinecraftServer.LOGGER.warn("Asynchronous " + reason + "!", new IllegalStateException());
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-index db1440b09e620ce2aa9441e92b43b0d1ab8ee7a8..1607aa69a4ddcb1bfc563ceeefaa3484c61c5ba5 100644
+index a97f7345f97af55f9b8933f2d94f88123643157d..297f3d755635f06a9a5d66d15acb2d13f0243043 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-@@ -2746,6 +2746,11 @@ public final class CraftServer implements Server {
+@@ -2965,6 +2965,11 @@ public final class CraftServer implements Server {
                  task = io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentRegion().getData().getRegionSchedulingHandle();
              }
          }
@@ -294,7 +295,7 @@ index db1440b09e620ce2aa9441e92b43b0d1ab8ee7a8..1607aa69a4ddcb1bfc563ceeefaa3484
          if (!(task instanceof io.papermc.paper.threadedregions.TickRegionScheduler.RegionScheduleHandle tickHandle)) {
              throw new UnsupportedOperationException("Not on any region");
          }
-@@ -2819,6 +2824,11 @@ public final class CraftServer implements Server {
+@@ -3038,6 +3043,11 @@ public final class CraftServer implements Server {
                  task = io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentRegion().getData().getRegionSchedulingHandle();
              }
          }
@@ -307,12 +308,12 @@ index db1440b09e620ce2aa9441e92b43b0d1ab8ee7a8..1607aa69a4ddcb1bfc563ceeefaa3484
              throw new UnsupportedOperationException("Not on any region");
          }
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
-index e6cd1c4a50b32b74f70a264e869b1ab4ac9b9eb0..3b58540b5ce2497722077c529a4d712fc5b6d7c1 100644
+index 852e1ffef6a022caad7c8eff34091e50112a2290..61162c45829b1217ce5ffed58adf4b4e22da427d 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
-@@ -305,6 +305,15 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
- 
-     protected boolean teleport0(Location location, TeleportCause cause, TeleportFlag... flags) {
+@@ -300,6 +300,15 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
+     @Override
+     public boolean teleport(Location location, TeleportCause cause, io.papermc.paper.entity.TeleportFlag... flags) {
          // Folia start - region threading
 +        // Folia-Compat start - legacy plugins call the sync teleport; forward it to teleportAsync
 +        if (io.papermc.paper.threadedregions.LegacyCompat.ENABLED) {
@@ -327,12 +328,12 @@ index e6cd1c4a50b32b74f70a264e869b1ab4ac9b9eb0..3b58540b5ce2497722077c529a4d712f
              throw new UnsupportedOperationException("Must use teleportAsync while in region threading");
          }
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-index 403859ddf90036dc812eab707cd06499c6dbf8f7..0c611fed84704f2584604cfd5a36c2770eb74b7d 100644
+index 82d2309f2bc7e9d1e989f4b4212e360b47aa533f..c32491a3ce25898168ade4d9bc9e92b5c5c12596 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-@@ -1333,6 +1333,15 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
+@@ -1361,6 +1361,15 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
      @Override
-     protected boolean teleport0(Location location, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause cause, io.papermc.paper.entity.TeleportFlag... flags) {
+     public boolean teleport(Location location, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause cause, io.papermc.paper.entity.TeleportFlag... flags) {
          // Folia start - region threading
 +        // Folia-Compat start - legacy plugins call the sync teleport; forward it to teleportAsync
 +        if (io.papermc.paper.threadedregions.LegacyCompat.ENABLED) {
@@ -347,7 +348,7 @@ index 403859ddf90036dc812eab707cd06499c6dbf8f7..0c611fed84704f2584604cfd5a36c277
              throw new UnsupportedOperationException("Must use teleportAsync while in region threading");
          }
 diff --git a/src/main/java/org/bukkit/craftbukkit/scheduler/CraftScheduler.java b/src/main/java/org/bukkit/craftbukkit/scheduler/CraftScheduler.java
-index c4dcddc4db02ed3641d05fae31ead7c13205f841..c25133635962881913dac6de19024904618a1e87 100644
+index fad85bea8643a3a88ec5c4194de7a5060e81c136..f83748bf4ab984682d69e476efe16e4a80ae6881 100644
 --- a/src/main/java/org/bukkit/craftbukkit/scheduler/CraftScheduler.java
 +++ b/src/main/java/org/bukkit/craftbukkit/scheduler/CraftScheduler.java
 @@ -508,13 +508,28 @@ public class CraftScheduler implements BukkitScheduler {
@@ -412,10 +413,10 @@ index b959fe4311fc6cbae3dcc052ef4710f8c8aefec6..f760c72320fa7adc2ce4b61bfae9fd97
          this.getHandle().setDisplayObjective(CraftScoreboardTranslations.fromBukkitSlot(slot), null);
      }
 diff --git a/src/main/java/org/bukkit/craftbukkit/scoreboard/CraftScoreboardManager.java b/src/main/java/org/bukkit/craftbukkit/scoreboard/CraftScoreboardManager.java
-index ab76c7f9bb0a4980a07a4d08c0d3ecadbca9668b..98eec199360f20ee468293bbc50f863e2eaee866 100644
+index c4a5769bd3d27a7d56e0fd29856d824794aa6c2e..98630894c3e14fc4edeb535b83d711d07db550e6 100644
 --- a/src/main/java/org/bukkit/craftbukkit/scoreboard/CraftScoreboardManager.java
 +++ b/src/main/java/org/bukkit/craftbukkit/scoreboard/CraftScoreboardManager.java
-@@ -38,7 +38,7 @@ public final class CraftScoreboardManager implements ScoreboardManager {
+@@ -39,7 +39,7 @@ public final class CraftScoreboardManager implements ScoreboardManager {
  
      @Override
      public CraftScoreboard getNewScoreboard() {
@@ -424,7 +425,7 @@ index ab76c7f9bb0a4980a07a4d08c0d3ecadbca9668b..98eec199360f20ee468293bbc50f863e
          org.spigotmc.AsyncCatcher.catchOp("scoreboard creation"); // Spigot
          CraftScoreboard scoreboard = new CraftScoreboard(new ServerScoreboard(this.server));
          if (io.papermc.paper.configuration.GlobalConfiguration.get().scoreboards.trackPluginScoreboards) {
-@@ -59,7 +59,7 @@ public final class CraftScoreboardManager implements ScoreboardManager {
+@@ -60,7 +60,7 @@ public final class CraftScoreboardManager implements ScoreboardManager {
      }
  
      public void setPlayerBoard(CraftPlayer player, CraftScoreboard scoreboard) {
@@ -434,10 +435,10 @@ index ab76c7f9bb0a4980a07a4d08c0d3ecadbca9668b..98eec199360f20ee468293bbc50f863e
          net.minecraft.world.scores.Scoreboard newBoard = scoreboard.getHandle();
          if (oldBoard == newBoard) {
 diff --git a/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java b/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
-index 936b812843dfc1b58e4fb3c41a0f9683258a1a98..015f38781e2cb629dfc2aa8a3baeba3590f42fa7 100644
+index 679529d94c16960527e5d76adb61c7e536f55d3e..936823d324ff4d57046fc044d9df5ed761c4c652 100644
 --- a/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
 +++ b/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
-@@ -373,7 +373,7 @@ public final class CraftMagicNumbers implements UnsafeValues {
+@@ -367,7 +367,7 @@ public final class CraftMagicNumbers implements UnsafeValues {
          }
  
          // Folia start - block plugins not marked as supported
@@ -465,7 +466,7 @@ index 905dde12db8ac8dc0ff8ff6898867039e6e4e550..b7000c4af4ae1764691a81bea45e2a2f
          }
          return true;
 diff --git a/src/main/java/org/spigotmc/SpigotConfig.java b/src/main/java/org/spigotmc/SpigotConfig.java
-index 36056baa20a055b89fdb5c796d25fa1f2c04794d..7ac177b48ce9f3ac08a52b1d83c629b65e051e3e 100644
+index d6661b132a2363761f06a8b8d6561dcb6d3ecd5e..08b8779adb84b32041d90858f7ec3e7757a02b7c 100644
 --- a/src/main/java/org/spigotmc/SpigotConfig.java
 +++ b/src/main/java/org/spigotmc/SpigotConfig.java
 @@ -183,7 +183,7 @@ public class SpigotConfig {
