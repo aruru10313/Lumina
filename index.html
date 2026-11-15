@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lumina — Folia + Paper plugin compatibility</title>
+  <meta name="description" content="Lumina: an unofficial Folia fork that also runs regular Paper plugins. Downloads for every supported Minecraft version.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23d68cff'/><stop offset='1' stop-color='%2350e6e6'/></linearGradient></defs><rect width='32' height='32' rx='8' fill='url(%23g)'/><text x='16' y='23' font-family='Arial' font-weight='700' font-size='18' text-anchor='middle' fill='%23101020'>L</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="nav">
+    <a class="brand" href="#top">Lumina</a>
+    <nav>
+      <a href="#download" data-i18n="nav.download"></a>
+      <a href="#how" data-i18n="nav.how"></a>
+      <a href="#config" data-i18n="nav.config"></a>
+      <a href="#risks" data-i18n="nav.risks"></a>
+      <a href="https://github.com/aruru10313/Lumina" target="_blank" rel="noopener">GitHub</a>
+      <button id="lang" class="lang" type="button" aria-label="Language">EN</button>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <h1 class="logo">LUMINA</h1>
+      <p class="tagline" data-i18n="hero.tagline"></p>
+      <p class="sub" data-i18n="hero.sub"></p>
+      <div class="cta">
+        <a class="btn primary" href="#download" data-i18n="hero.cta"></a>
+        <a class="btn" href="https://github.com/aruru10313/Lumina" target="_blank" rel="noopener" data-i18n="hero.source"></a>
+      </div>
+      <div class="pills">
+        <div class="pill"><b data-i18n="pill.1.t"></b><span data-i18n="pill.1.d"></span></div>
+        <div class="pill"><b data-i18n="pill.2.t"></b><span data-i18n="pill.2.d"></span></div>
+        <div class="pill"><b data-i18n="pill.3.t"></b><span data-i18n-html="pill.3.d"></span></div>
+      </div>
+    </section>
+
+    <section id="download" class="section">
+      <h2 data-i18n="dl.title"></h2>
+      <p class="muted" data-i18n="dl.desc"></p>
+      <div id="versions" class="versions"><p class="muted" data-i18n="dl.loading"></p></div>
+      <p class="muted small" data-i18n-html="dl.run"></p>
+    </section>
+
+    <section id="how" class="section">
+      <h2 data-i18n="how.title"></h2>
+      <p data-i18n-html="how.intro"></p>
+      <div class="split">
+        <div class="card">
+          <h3 data-i18n="how.folia.t"></h3>
+          <p data-i18n="how.folia.d"></p>
+        </div>
+        <div class="card">
+          <h3 data-i18n="how.legacy.t"></h3>
+          <p data-i18n="how.legacy.d"></p>
+        </div>
+      </div>
+      <h3 data-i18n="how.table.t"></h3>
+      <table class="tbl">
+        <thead><tr><th data-i18n="how.col.case"></th><th data-i18n="how.col.handling"></th></tr></thead>
+        <tbody id="how-rows"></tbody>
+      </table>
+      <h3 data-i18n="how.steps.t"></h3>
+      <ol id="how-steps" class="steps"></ol>
+      <div class="split">
+        <div class="card">
+          <h3 data-i18n="on.t"></h3>
+          <ul id="on-list"></ul>
+        </div>
+        <div class="card">
+          <h3 data-i18n="off.t"></h3>
+          <ul id="off-list"></ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="config" class="section">
+      <h2 data-i18n="cfg.title"></h2>
+      <table class="tbl">
+        <thead><tr><th data-i18n="cfg.col.opt"></th><th data-i18n="cfg.col.def"></th><th data-i18n="cfg.col.desc"></th></tr></thead>
+        <tbody>
+          <tr><td><code>-Dfolia.legacyCompat=false</code></td><td><code>true</code></td><td data-i18n="cfg.1"></td></tr>
+          <tr><td><code>-Dfolia.legacyCommands=false</code></td><td><code>true</code></td><td data-i18n="cfg.2"></td></tr>
+          <tr><td><code>-Dfolia.legacyCompat.slowWarnMs=100</code></td><td><code>100</code></td><td data-i18n="cfg.3"></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="risks" class="section">
+      <h2 data-i18n="risk.title"></h2>
+      <ul id="risk-list" class="risks"></ul>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p data-i18n="foot.disclaimer"></p>
+    <p class="muted small" data-i18n-html="foot.license"></p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
