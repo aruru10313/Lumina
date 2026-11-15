@@ -4,7 +4,7 @@
 
   const REPO = "aruru10313/Lumina";
   // Minecraft versions with an upstream Folia branch, newest first.
-  const TARGETS = ["26.3", "26.2", "26.1", "1.21.11", "1.21.8", "1.21.7", "1.21.6", "1.21.5", "1.21.4", "1.20.6", "1.20.4"];
+  const TARGETS = ["26.3", "26.2", "26.1.2", "1.21.11", "1.21.8", "1.21.7", "1.21.6", "1.21.5", "1.21.4", "1.20.6", "1.20.4"];
 
   const S = {
     ko: { build: "빌드", date: "날짜", commit: "커밋", size: "크기", file: "파일", sha: "SHA-256", dl: "다운로드",
