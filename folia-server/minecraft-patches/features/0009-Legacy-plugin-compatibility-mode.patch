@@ -113,6 +113,19 @@ index e1842ab8f20271a8b20ab8462b09a4745a612a9a..32c305eef7ff5a26a81c7db9bbbfa15d
  
          // commands
          ((DedicatedServer)MinecraftServer.getServer()).handleConsoleInputs();
+diff --git a/io/papermc/paper/threadedregions/RegionizedTaskQueue.java b/io/papermc/paper/threadedregions/RegionizedTaskQueue.java
+index 25a0b1d56652e4455a188d0f413581638d5ef538..a540c30d8e38a458c781b4d3b0b1248aaaf99f5a 100644
+--- a/io/papermc/paper/threadedregions/RegionizedTaskQueue.java
++++ b/io/papermc/paper/threadedregions/RegionizedTaskQueue.java
+@@ -80,7 +80,7 @@ public final class RegionizedTaskQueue {
+             this.world = world;
+         }
+ 
+-        private boolean executeGlobalChunkTask() {
++        public boolean executeGlobalChunkTask() { // Lumina - called by LegacyCompat while waiting for chunk loads
+             final Runnable run = this.globalChunkTask.poll();
+             if (run != null) {
+                 run.run();
 diff --git a/io/papermc/paper/threadedregions/TickRegionScheduler.java b/io/papermc/paper/threadedregions/TickRegionScheduler.java
 index fa6b8d756195c1b430cc11214a901bd42eebc98d..f9ca8ad7dc160cc2b23b34da1f94c161195d86c4 100644
 --- a/io/papermc/paper/threadedregions/TickRegionScheduler.java

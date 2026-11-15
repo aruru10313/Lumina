@@ -375,7 +375,7 @@ public final class LegacyCompat {
         if (any != null) {
             return any;
         }
-        return DETACHED.computeIfAbsent(world, (w) -> new RegionizedWorldData(w, null));
+        return DETACHED.computeIfAbsent(world, (w) -> new RegionizedWorldData(w));
     }
 
     // ------------------------------------------------------------------ stats
