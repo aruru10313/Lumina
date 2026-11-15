@@ -1,0 +1,14 @@
+name = "lumina-stats"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+# Serve from our own domain only; the workers.dev address would expose the account name.
+workers_dev = false
+routes = [
+  { pattern = "lumina-stats.aruru.kr", custom_domain = true }
+]
+
+# Filled in by `wrangler kv namespace create STATS`
+[[kv_namespaces]]
+binding = "STATS"
+id = "ec08a514f3e54f929f5c5a748ceac6d1"

@@ -12,6 +12,7 @@ on:
       - ".github/assets/**"
       - ".github/workflows/**"
       - "compat-test/**"
+      - "tools/**"
 
 permissions:
   contents: write
