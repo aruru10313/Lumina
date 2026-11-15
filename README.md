@@ -79,7 +79,7 @@ Folia를 지원하는 플러그인과 월드는 원래처럼 지역마다 다른
 ## 빠른 시작
 
 ```bash
-java -Xms4G -Xmx4G -jar lumina-26.1-b<빌드>.jar --nogui
+java -Xms4G -Xmx4G -jar lumina-26.1.2-b<빌드>.jar --nogui
 ```
 
 처음 실행할 때 Mojang 서버 파일을 자동으로 받습니다. `eula.txt`에 동의한 뒤 다시 실행하세요.

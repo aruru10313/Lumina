@@ -1,6 +1,6 @@
 # Lumina (루미나)
 
-Folia 26.1 기반 서버입니다. Folia에 **일반 Paper 플러그인 호환 모드(세상 멈추기, stop-the-world)**를 더했어요.
+Folia 26.1.2 기반 서버입니다. Folia에 **일반 Paper 플러그인 호환 모드(세상 멈추기, stop-the-world)**를 더했어요.
 
 - 서버 이름(`/version`, 시작 로그)은 **Lumina**로 나옵니다. 서버가 켜질 때 LUMINA 로고가 색 그라데이션으로 출력돼요.
 - `Brand-Id`는 `papermc:folia`로 그대로 뒀습니다. 플러그인이 Folia인지 확인해서 Folia 스케줄러를 쓰는 동작이 계속 맞게 돌아가도록 하기 위해서예요.
@@ -68,7 +68,7 @@ Folia 26.1 기반 서버입니다. Folia에 **일반 Paper 플러그인 호환 �
 ./gradlew applyAllPatches
 ./gradlew :folia-server:createPaperclipJar
 ```
-결과물: `folia-server/build/libs/folia-paperclip-26.1.local-SNAPSHOT.jar`
+결과물: `folia-server/build/libs/folia-paperclip-26.1.2.local-SNAPSHOT.jar`
 
 Windows에서 빌드할 때는 git의 `core.autocrlf=false`와 git 사용자 정보가 필요합니다.
 
