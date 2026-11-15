@@ -3,101 +3,203 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Lumina — Folia + Paper plugin compatibility</title>
-  <meta name="description" content="Lumina: an unofficial Folia fork that also runs regular Paper plugins. Downloads for every supported Minecraft version.">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23d68cff'/><stop offset='1' stop-color='%2350e6e6'/></linearGradient></defs><rect width='32' height='32' rx='8' fill='url(%23g)'/><text x='16' y='23' font-family='Arial' font-weight='700' font-size='18' text-anchor='middle' fill='%23101020'>L</text></svg>">
+  <title>Lumina 서버 — Folia 멀티스레딩 + 일반 Paper 플러그인 호환</title>
+  <meta name="description" content="Lumina는 Folia 기반 마인크래프트 서버입니다. folia-supported가 없는 일반 Paper 플러그인도 그대로 돌아갑니다. 1.20.4부터 26.3까지 버전별 다운로드.">
+  <meta name="keywords" content="Lumina, 루미나, Folia, 폴리아, Paper, 페이퍼, 마인크래프트 서버, 멀티스레드, 플러그인 호환, Minecraft server, multithreaded">
+  <link rel="canonical" href="https://lumina.aruru.kr/">
+  <meta name="theme-color" content="#0f1014">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Lumina">
+  <meta property="og:title" content="Lumina — Folia + 일반 Paper 플러그인 호환">
+  <meta property="og:description" content="Folia의 지역별 멀티스레딩에 일반 Paper 플러그인 호환 모드를 더한 비공식 서버.">
+  <meta property="og:url" content="https://lumina.aruru.kr/">
+  <meta property="og:image" content="https://lumina.aruru.kr/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"SoftwareApplication","name":"Lumina","alternateName":"루미나","applicationCategory":"ServerApplication","operatingSystem":"Windows, Linux, macOS (Java)","url":"https://lumina.aruru.kr/","license":"https://www.gnu.org/licenses/gpl-3.0.html","offers":{"@type":"Offer","price":"0","priceCurrency":"KRW"},"description":"Folia-based Minecraft server with a compatibility mode for regular Paper plugins."}
+  </script>
+  <script>document.documentElement.lang = localStorage.getItem("lumina.lang") || ((navigator.language || "ko").toLowerCase().startsWith("ko") ? "ko" : "en");</script>
 </head>
 <body>
-  <header class="nav">
-    <a class="brand" href="#top">Lumina</a>
-    <nav>
-      <a href="#download" data-i18n="nav.download"></a>
-      <a href="#how" data-i18n="nav.how"></a>
-      <a href="#config" data-i18n="nav.config"></a>
-      <a href="#risks" data-i18n="nav.risks"></a>
-      <a href="https://github.com/aruru10313/Lumina" target="_blank" rel="noopener">GitHub</a>
-      <button id="lang" class="lang" type="button" aria-label="Language">EN</button>
-    </nav>
-  </header>
+  <div class="notice">
+    <span data-lang="ko"><b>비공식 프로젝트</b> · Lumina는 PaperMC와 관련이 없으며 PaperMC(Paper·Folia 팀)의 지원을 받지 않습니다. 문제는 PaperMC가 아니라 <a href="https://github.com/aruru10313/Lumina/issues">Lumina 저장소</a>에 알려 주세요.</span>
+    <span data-lang="en"><b>Unofficial project</b> · Lumina is not affiliated with or supported by PaperMC (the Paper/Folia team). Report issues to the <a href="https://github.com/aruru10313/Lumina/issues">Lumina repository</a>, not to PaperMC.</span>
+  </div>
 
-  <main id="top">
+  <header class="nav"><div class="nav-in">
+    <a class="brand" href="/"><img src="logo.svg" alt="">Lumina</a>
+    <nav>
+      <a href="#download"><span data-lang="ko">다운로드</span><span data-lang="en">Download</span></a>
+      <a class="hide-sm" href="#how"><span data-lang="ko">동작 방식</span><span data-lang="en">How it works</span></a>
+      <a class="hide-sm" href="#config"><span data-lang="ko">설정</span><span data-lang="en">Config</span></a>
+      <a class="hide-sm" href="https://github.com/aruru10313/Lumina" target="_blank" rel="noopener">GitHub</a>
+      <button class="lang" type="button" data-toggle-lang><span data-lang="ko">EN</span><span data-lang="en">한국어</span></button>
+    </nav>
+  </div></header>
+
+  <main class="wrap">
     <section class="hero">
-      <h1 class="logo">LUMINA</h1>
-      <p class="tagline" data-i18n="hero.tagline"></p>
-      <p class="sub" data-i18n="hero.sub"></p>
-      <div class="cta">
-        <a class="btn primary" href="#download" data-i18n="hero.cta"></a>
-        <a class="btn" href="https://github.com/aruru10313/Lumina" target="_blank" rel="noopener" data-i18n="hero.source"></a>
+      <div>
+        <h1 data-lang="ko">Folia 위에서<br>일반 플러그인도 <span class="wm">그대로</span>.</h1>
+        <h1 data-lang="en">Folia, with your<br>regular plugins <span class="wm">intact</span>.</h1>
+        <p class="lead" data-lang="ko">Lumina는 Folia를 기반으로 한 마인크래프트 서버입니다. 지역마다 병렬로 틱을 돌리는 Folia 구조는 그대로 두고, <code>folia-supported</code> 표시가 없는 Paper 플러그인도 로딩해서 안전하게 실행합니다.</p>
+        <p class="lead" data-lang="en">Lumina is a Minecraft server built on Folia. It keeps Folia's parallel, per-region ticking and also loads Paper plugins that lack <code>folia-supported</code>, running them safely.</p>
+        <div class="cta">
+          <a class="btn primary" href="#download"><span data-lang="ko">서버 받기</span><span data-lang="en">Get the server</span></a>
+          <a class="btn" href="https://github.com/aruru10313/Lumina" target="_blank" rel="noopener"><span data-lang="ko">소스 코드</span><span data-lang="en">Source code</span></a>
+        </div>
       </div>
-      <div class="pills">
-        <div class="pill"><b data-i18n="pill.1.t"></b><span data-i18n="pill.1.d"></span></div>
-        <div class="pill"><b data-i18n="pill.2.t"></b><span data-i18n="pill.2.d"></span></div>
-        <div class="pill"><b data-i18n="pill.3.t"></b><span data-i18n-html="pill.3.d"></span></div>
+<div class="term"><span class="c1">  ██╗     ██╗   ██╗███╗   ███╗</span>
+<span class="c2">  ██║     ██║   ██║██╔████╔██║</span>
+<span class="c3">  ███████╗╚██████╔╝██║ ╚═╝ ██║</span>
+<span class="d">  Lumina for Minecraft 26.3 | based on Folia</span>
+<span class="d">  legacy plugins:</span> <span class="g">ON</span>
+
+<span class="d">[INFO]</span> Enabling LuckPerms <span class="d">(folia)</span>
+<span class="d">[WARN]</span> Multiverse-Core is not folia-supported,
+       loading in compatibility mode
+<span class="d">[INFO]</span> Done (18.2s)! For help, type "help"</div>
+    </section>
+
+    <section class="section" style="border-top:0;padding-top:8px">
+      <div class="features">
+        <div>
+          <h3 data-lang="ko">지역별 병렬 틱 유지</h3><h3 data-lang="en">Parallel region ticking</h3>
+          <p data-lang="ko">Folia를 지원하는 플러그인과 월드는 원래처럼 지역마다 다른 스레드에서 돕니다. 성능 손해가 없습니다.</p>
+          <p data-lang="en">Folia-ready plugins and worlds keep ticking on separate threads per region, at no extra cost.</p>
+        </div>
+        <div>
+          <h3 data-lang="ko">일반 플러그인 호환</h3><h3 data-lang="en">Regular plugins work</h3>
+          <p data-lang="ko">BukkitScheduler, 동기 teleport, 스코어보드 API, 꺼져 있던 바닐라 명령어를 다시 쓸 수 있습니다.</p>
+          <p data-lang="en">BukkitScheduler, sync teleport, the scoreboard API and previously disabled vanilla commands are back.</p>
+        </div>
+        <div>
+          <h3 data-lang="ko">옵션 하나로 순정 Folia</h3><h3 data-lang="en">One flag for stock Folia</h3>
+          <p data-lang="ko"><code>-Dfolia.legacyCompat=false</code>를 주면 호환 모드가 꺼지고 Folia와 똑같이 동작합니다.</p>
+          <p data-lang="en">Pass <code>-Dfolia.legacyCompat=false</code> and the server behaves exactly like Folia.</p>
+        </div>
       </div>
     </section>
 
     <section id="download" class="section">
-      <h2 data-i18n="dl.title"></h2>
-      <p class="muted" data-i18n="dl.desc"></p>
-      <div id="versions" class="versions"><p class="muted" data-i18n="dl.loading"></p></div>
-      <p class="muted small" data-i18n-html="dl.run"></p>
+      <h2><span data-lang="ko">다운로드</span><span data-lang="en">Downloads</span></h2>
+      <p class="desc" data-lang="ko">버전을 고르세요. 모든 빌드는 GitHub Actions가 공개된 소스에서 직접 만들어 GitHub Releases에 올립니다. 처음 실행할 때 Mojang 서버 파일을 자동으로 받습니다.</p>
+      <p class="desc" data-lang="en">Pick a version. Every build is produced from the public source by GitHub Actions and published on GitHub Releases. The Mojang server is downloaded automatically on first start.</p>
+      <div class="dl">
+        <div class="vlist" id="vlist"></div>
+        <div class="vdetail" id="vdetail"><p class="muted"><span data-lang="ko">빌드 목록을 불러오는 중…</span><span data-lang="en">Loading builds…</span></p></div>
+      </div>
     </section>
 
     <section id="how" class="section">
-      <h2 data-i18n="how.title"></h2>
-      <p data-i18n-html="how.intro"></p>
-      <div class="split">
-        <div class="card">
-          <h3 data-i18n="how.folia.t"></h3>
-          <p data-i18n="how.folia.d"></p>
-        </div>
-        <div class="card">
-          <h3 data-i18n="how.legacy.t"></h3>
-          <p data-i18n="how.legacy.d"></p>
-        </div>
-      </div>
-      <h3 data-i18n="how.table.t"></h3>
+      <h2><span data-lang="ko">동작 방식</span><span data-lang="en">How it works</span></h2>
+      <p class="desc" data-lang="ko">핵심은 <code>LegacyCompat</code> 클래스 하나입니다. 플러그인이 Folia를 지원하면 Folia 방식 그대로, 지원하지 않으면 모든 지역을 잠깐 멈춘 상태(stop-the-world)에서 혼자 실행합니다.</p>
+      <p class="desc" data-lang="en">The core is a single class, <code>LegacyCompat</code>. Folia-ready plugins run exactly as on Folia; others run alone while every region is briefly paused (stop-the-world).</p>
+
       <table class="tbl">
-        <thead><tr><th data-i18n="how.col.case"></th><th data-i18n="how.col.handling"></th></tr></thead>
-        <tbody id="how-rows"></tbody>
+        <thead><tr><th><span data-lang="ko">상황</span><span data-lang="en">Situation</span></th><th><span data-lang="ko">처리</span><span data-lang="en">Handling</span></th></tr></thead>
+        <tbody>
+          <tr><td data-lang="ko">일반 플러그인이 듣는 동기 이벤트</td><td data-lang="en">Sync events a regular plugin listens to</td>
+              <td data-lang="ko">이벤트 전체를 <code>runExclusive</code>로 실행</td><td data-lang="en">The whole event runs inside <code>runExclusive</code></td></tr>
+          <tr><td data-lang="ko">BukkitScheduler 동기 작업</td><td data-lang="en">BukkitScheduler sync tasks</td>
+              <td data-lang="ko">전역 틱마다 확인해서, 실행할 작업이 있는 틱에만 <code>runExclusive</code></td><td data-lang="en">Checked every global tick; <code>runExclusive</code> only when tasks are due</td></tr>
+          <tr><td data-lang="ko">비동기 작업</td><td data-lang="en">Async tasks</td>
+              <td data-lang="ko">기존 Paper 방식 그대로</td><td data-lang="en">Unchanged from Paper</td></tr>
+          <tr><td data-lang="ko">모든 명령어, 일반 플러그인의 onEnable / onDisable</td><td data-lang="en">All commands, onEnable / onDisable of regular plugins</td>
+              <td data-lang="ko"><code>runExclusive</code> 안에서 실행</td><td data-lang="en">Run inside <code>runExclusive</code></td></tr>
+          <tr><td data-lang="ko">다른 지역의 블록 수정 / 엔티티 추가 / teleport</td><td data-lang="en">Block edits / entity adds / teleport in another region</td>
+              <td data-lang="ko">스레드의 "현재 지역"을 그 지역으로 잠깐 바꿔서 실행 (<code>inRegionAt</code>)</td><td data-lang="en">The thread's current region is switched temporarily (<code>inRegionAt</code>)</td></tr>
+          <tr><td data-lang="ko">로드되지 않은 청크의 동기 로딩</td><td data-lang="en">Sync load of an unloaded chunk</td>
+              <td data-lang="ko">잠금을 잠깐 풀고 요청합니다. 기다리는 스레드가 그 지역 작업을 직접 처리해서, 틱 스레드가 1~2개여도 멈추지 않습니다</td><td data-lang="en">The lock is released while waiting and the waiting thread processes the region's tasks itself, so it never stalls even with 1–2 tick threads</td></tr>
+          <tr><td data-lang="ko">서버 시작</td><td data-lang="en">Server startup</td>
+              <td data-lang="ko">지역 스레드를 POSTWORLD 플러그인 켜기 전에 시작하고, 전역 틱(접속, 콘솔)은 그다음에 시작</td><td data-lang="en">Region threads start before POSTWORLD plugins enable; the global tick (logins, console) starts afterwards</td></tr>
+        </tbody>
       </table>
-      <h3 data-i18n="how.steps.t"></h3>
-      <ol id="how-steps" class="steps"></ol>
-      <div class="split">
-        <div class="card">
-          <h3 data-i18n="on.t"></h3>
-          <ul id="on-list"></ul>
+
+      <div class="cols">
+        <div>
+          <h3><span data-lang="ko">runExclusive 순서</span><span data-lang="en">Inside runExclusive</span></h3>
+          <ol class="steps" data-lang="ko">
+            <li>다른 지역들이 지금 돌고 있는 틱을 끝낼 때까지 기다리고, 새 틱은 막습니다.</li>
+            <li>혼자 실행하는 동안 스레드 소유 검사를 통과시킵니다.</li>
+            <li>추가·제거된 엔티티와 청크는 그 위치를 소유한 지역에 기록합니다.</li>
+            <li>기다리는 스레드는 자신을 "멈춤"으로 표시해서 데드락을 막습니다.</li>
+          </ol>
+          <ol class="steps" data-lang="en">
+            <li>Waits for running region ticks to finish and blocks new ones.</li>
+            <li>Thread ownership checks pass while running alone.</li>
+            <li>Added/removed entities and chunks are recorded in the region that owns the position.</li>
+            <li>Waiting threads mark themselves paused, which prevents deadlocks.</li>
+          </ol>
         </div>
-        <div class="card">
-          <h3 data-i18n="off.t"></h3>
-          <ul id="off-list"></ul>
+        <div>
+          <h3><span data-lang="ko">아직 꺼져 있는 것</span><span data-lang="en">Still disabled</span></h3>
+          <ul class="plain" data-lang="ko">
+            <li><code>/reload</code>, <code>/datapack</code>: Folia에서는 메인 스레드 큐가 돌지 않아 서버가 멈춥니다</li>
+            <li><code>/save-all</code>: 저장이 지역 단위입니다. 자동 저장과 <code>/stop</code> 저장은 정상입니다</li>
+            <li><code>/perf</code>, <code>/test</code>: 메인 스레드 전용 기능입니다</li>
+            <li><code>createWorld</code> / <code>unloadWorld</code>: Folia 원본에서도 아직 없습니다</li>
+          </ul>
+          <ul class="plain" data-lang="en">
+            <li><code>/reload</code>, <code>/datapack</code>: the main-thread queue doesn't run on Folia, so the server would hang</li>
+            <li><code>/save-all</code>: saving is per region; autosave and saving on <code>/stop</code> work</li>
+            <li><code>/perf</code>, <code>/test</code>: main-thread only features</li>
+            <li><code>createWorld</code> / <code>unloadWorld</code>: not in upstream Folia either</li>
+          </ul>
         </div>
       </div>
     </section>
 
     <section id="config" class="section">
-      <h2 data-i18n="cfg.title"></h2>
+      <h2><span data-lang="ko">설정</span><span data-lang="en">Configuration</span></h2>
+      <p class="desc" data-lang="ko">JVM 옵션으로 정합니다. <code>java</code> 명령의 <code>-jar</code> 앞에 붙이세요.</p>
+      <p class="desc" data-lang="en">Set as JVM flags, before <code>-jar</code> in your <code>java</code> command.</p>
       <table class="tbl">
-        <thead><tr><th data-i18n="cfg.col.opt"></th><th data-i18n="cfg.col.def"></th><th data-i18n="cfg.col.desc"></th></tr></thead>
+        <thead><tr><th><span data-lang="ko">옵션</span><span data-lang="en">Flag</span></th><th><span data-lang="ko">설명</span><span data-lang="en">Description</span></th></tr></thead>
         <tbody>
-          <tr><td><code>-Dfolia.legacyCompat=false</code></td><td><code>true</code></td><td data-i18n="cfg.1"></td></tr>
-          <tr><td><code>-Dfolia.legacyCommands=false</code></td><td><code>true</code></td><td data-i18n="cfg.2"></td></tr>
-          <tr><td><code>-Dfolia.legacyCompat.slowWarnMs=100</code></td><td><code>100</code></td><td data-i18n="cfg.3"></td></tr>
+          <tr><td><code>-Dfolia.legacyCompat=false</code></td><td><span data-lang="ko">호환 모드 전체를 끕니다 (기본값 true)</span><span data-lang="en">Turns compatibility mode off (default true)</span></td></tr>
+          <tr><td><code>-Dfolia.legacyCommands=false</code></td><td><span data-lang="ko">다시 켠 명령어와 명령어 전역 실행만 끕니다 (기본값 true)</span><span data-lang="en">Turns off only the re-enabled commands (default true)</span></td></tr>
+          <tr><td><code>-Dfolia.legacyCompat.slowWarnMs=100</code></td><td><span data-lang="ko">전역 실행이 이 시간(ms)보다 길면 경고합니다 (기본값 100)</span><span data-lang="en">Warns when an exclusive section takes longer than this many ms (default 100)</span></td></tr>
         </tbody>
       </table>
-    </section>
 
-    <section id="risks" class="section">
-      <h2 data-i18n="risk.title"></h2>
-      <ul id="risk-list" class="risks"></ul>
+      <h3><span data-lang="ko">알아 두어야 할 점</span><span data-lang="en">Caveats</span></h3>
+      <div class="callout" data-lang="ko">
+        <b>운영 서버에 쓰기 전에 꼭 테스트 서버에서 확인하세요.</b>
+        <ul class="plain" style="margin-top:8px">
+          <li>일반 플러그인이 많이 일할수록 서버가 단일 스레드처럼 느려집니다.</li>
+          <li>Folia 내부 잠금을 쥔 상태에서 일반 플러그인 이벤트가 발생하면 이론상 데드락이 날 수 있습니다. 멈추면 워치독이 스레드 덤프를 남깁니다.</li>
+          <li>NMS나 CraftBukkit 내부를 직접 건드리는 플러그인은 깨질 수 있습니다.</li>
+          <li>PaperMC는 Lumina를 지원하지 않습니다. Lumina에서 생긴 문제를 Paper/Folia에 신고하지 마세요.</li>
+        </ul>
+      </div>
+      <div class="callout" data-lang="en">
+        <b>Test on a staging server before using it in production.</b>
+        <ul class="plain" style="margin-top:8px">
+          <li>The more work regular plugins do, the more the server behaves single-threaded.</li>
+          <li>A deadlock is theoretically possible if a regular plugin event fires while a Folia internal lock is held. The watchdog writes a thread dump if it hangs.</li>
+          <li>Plugins that touch NMS or CraftBukkit internals may break.</li>
+          <li>PaperMC does not support Lumina. Don't report Lumina problems to Paper/Folia.</li>
+        </ul>
+      </div>
     </section>
   </main>
 
-  <footer class="foot">
-    <p data-i18n="foot.disclaimer"></p>
-    <p class="muted small" data-i18n-html="foot.license"></p>
-  </footer>
+  <footer class="foot"><div class="foot-in">
+    <div>
+      <p data-lang="ko">Lumina는 Folia·Paper를 기반으로 한 비공식 포크이며 PaperMC와 관련이 없습니다. Minecraft는 Mojang Studios의 상표이며, 이 사이트는 Mojang·Microsoft와 관련이 없습니다.</p>
+      <p data-lang="en">Lumina is an unofficial fork based on Folia and Paper and is not affiliated with PaperMC. Minecraft is a trademark of Mojang Studios; this site is not affiliated with Mojang or Microsoft.</p>
+      <p>© 2026 Lumina · GPLv3</p>
+    </div>
+    <nav>
+      <a href="privacy.html"><span data-lang="ko">개인정보처리방침</span><span data-lang="en">Privacy</span></a>
+      <a href="terms.html"><span data-lang="ko">이용 안내</span><span data-lang="en">Terms</span></a>
+      <a href="https://github.com/aruru10313/Lumina">GitHub</a>
+      <a href="https://github.com/aruru10313/Lumina/issues"><span data-lang="ko">문제 신고</span><span data-lang="en">Issues</span></a>
+    </nav>
+  </div></footer>
 
   <script src="app.js"></script>
 </body>
