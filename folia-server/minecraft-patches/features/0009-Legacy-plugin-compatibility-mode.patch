@@ -1,0 +1,554 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: aruru10313 <195274207+aruru10313@users.noreply.github.com>
+Date: Sun, 15 Nov 2026 20:06:51 +0900
+Subject: [PATCH] Legacy plugin compatibility mode
+
+
+diff --git a/ca/spottedleaf/moonrise/paper/util/BaseChunkSystemHooks.java b/ca/spottedleaf/moonrise/paper/util/BaseChunkSystemHooks.java
+index bd3ce123652af11974be4cbf8d2e96f1b2ee0a68..9e1a47f2bd88b7fa63d2db0daae2569347d8f1bd 100644
+--- a/ca/spottedleaf/moonrise/paper/util/BaseChunkSystemHooks.java
++++ b/ca/spottedleaf/moonrise/paper/util/BaseChunkSystemHooks.java
+@@ -103,13 +103,13 @@ public abstract class BaseChunkSystemHooks implements ca.spottedleaf.moonrise.co
+ 
+     @Override
+     public void onChunkBorder(final LevelChunk chunk, final ChunkHolder holder) {
+-        chunk.getLevel().getCurrentWorldData().addChunk(chunk); // Folia - region threading
++        chunk.getLevel().getCurrentWorldData(chunk).addChunk(chunk); // Folia-Compat // Folia - region threading
+         chunk.loadCallback();
+     }
+ 
+     @Override
+     public void onChunkNotBorder(final LevelChunk chunk, final ChunkHolder holder) {
+-        chunk.getLevel().getCurrentWorldData().removeChunk(chunk); // Folia - region threading
++        chunk.getLevel().getCurrentWorldData(chunk).removeChunk(chunk); // Folia-Compat // Folia - region threading
+         chunk.unloadCallback();
+     }
+ 
+@@ -121,7 +121,7 @@ public abstract class BaseChunkSystemHooks implements ca.spottedleaf.moonrise.co
+ 
+     @Override
+     public void onChunkTicking(final LevelChunk chunk, final ChunkHolder holder) {
+-        chunk.getLevel().getCurrentWorldData().addTickingChunk(chunk); // Folia - region threading
++        chunk.getLevel().getCurrentWorldData(chunk).addTickingChunk(chunk); // Folia-Compat // Folia - region threading
+         if (!((ChunkSystemLevelChunk)chunk).moonrise$isPostProcessingDone()) {
+             chunk.postProcessGeneration((ServerLevel)chunk.getLevel());
+         }
+@@ -131,18 +131,18 @@ public abstract class BaseChunkSystemHooks implements ca.spottedleaf.moonrise.co
+ 
+     @Override
+     public void onChunkNotTicking(final LevelChunk chunk, final ChunkHolder holder) {
+-        chunk.getLevel().getCurrentWorldData().removeTickingChunk(chunk); // Folia - region threading
++        chunk.getLevel().getCurrentWorldData(chunk).removeTickingChunk(chunk); // Folia-Compat // Folia - region threading
+     }
+ 
+     @Override
+     public void onChunkEntityTicking(final LevelChunk chunk, final ChunkHolder holder) {
+-        chunk.getLevel().getCurrentWorldData().addEntityTickingChunk(chunk); // Folia - region threading
++        chunk.getLevel().getCurrentWorldData(chunk).addEntityTickingChunk(chunk); // Folia-Compat // Folia - region threading
+         ((ChunkTickServerLevel)(ServerLevel)chunk.getLevel()).moonrise$markChunkForPlayerTicking(chunk); // Moonrise - chunk tick iteration
+     }
+ 
+     @Override
+     public void onChunkNotEntityTicking(final LevelChunk chunk, final ChunkHolder holder) {
+-        chunk.getLevel().getCurrentWorldData().removeEntityTickingChunk(chunk); // Folia - region threading
++        chunk.getLevel().getCurrentWorldData(chunk).removeEntityTickingChunk(chunk); // Folia-Compat // Folia - region threading
+         ((ChunkTickServerLevel)(ServerLevel)chunk.getLevel()).moonrise$removeChunkForPlayerTicking(chunk); // Moonrise - chunk tick iteration
+     }
+ 
+diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/level/entity/EntityLookup.java b/ca/spottedleaf/moonrise/patches/chunk_system/level/entity/EntityLookup.java
+index 20941198b3a1227381c0a9039898a6506344a588..3b7adee0309acbb1d4cb29b98b528ffbe94ece79 100644
+--- a/ca/spottedleaf/moonrise/patches/chunk_system/level/entity/EntityLookup.java
++++ b/ca/spottedleaf/moonrise/patches/chunk_system/level/entity/EntityLookup.java
+@@ -1005,7 +1005,7 @@ public abstract class EntityLookup implements LevelEntityGetter<Entity> {
+             this.entity.setLevelCallback(NoOpCallback.INSTANCE);
+ 
+             // only AFTER full removal callbacks, so that thread checking will work. // Folia - region threading
+-            EntityLookup.this.world.getCurrentWorldData().removeEntity(entity); // Folia - region threading
++            EntityLookup.this.world.getCurrentWorldData(entity).removeEntity(entity); // Folia-Compat // Folia - region threading
+         }
+     }
+ 
+diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/level/entity/server/ServerEntityLookup.java b/ca/spottedleaf/moonrise/patches/chunk_system/level/entity/server/ServerEntityLookup.java
+index e3a49083e75116622bd95fb17533730a6fb36752..bce1da855953f5ab4b846cc232db35d329f53b18 100644
+--- a/ca/spottedleaf/moonrise/patches/chunk_system/level/entity/server/ServerEntityLookup.java
++++ b/ca/spottedleaf/moonrise/patches/chunk_system/level/entity/server/ServerEntityLookup.java
+@@ -89,7 +89,7 @@ public final class ServerEntityLookup extends EntityLookup {
+ 
+     @Override
+     protected void addEntityCallback(final Entity entity) {
+-        this.world.getCurrentWorldData().addEntity(entity); // Folia - region threading
++        this.world.getCurrentWorldData(entity).addEntity(entity); // Folia-Compat // Folia - region threading
+         if (entity instanceof ServerPlayer player) {
+             ((ChunkSystemServerLevel)this.serverWorld).moonrise$getNearbyPlayers().addPlayer(player);
+         }
+diff --git a/io/papermc/paper/threadedregions/RegionizedServer.java b/io/papermc/paper/threadedregions/RegionizedServer.java
+index e1842ab8f20271a8b20ab8462b09a4745a612a9a..32c305eef7ff5a26a81c7db9bbbfa15d2af5f205 100644
+--- a/io/papermc/paper/threadedregions/RegionizedServer.java
++++ b/io/papermc/paper/threadedregions/RegionizedServer.java
+@@ -63,9 +63,10 @@ public final class RegionizedServer {
+         new RegionizedServerInitEvent().callEvent();
+ 
+         // now we can schedule
++        LegacyCompat.globalTickStarted = true; // Lumina - from now on the global region drains global chunk tasks
+         this.tickHandle.setInitialStart(System.nanoTime() + TickRegionScheduler.TIME_BETWEEN_TICKS);
+         TickRegions.getScheduler().scheduleRegion(this.tickHandle);
+-        TickRegions.getScheduler().init();
++        if (!TickRegions.isStarted()) TickRegions.start(); // Lumina - may already be started for legacy plugin enabling
+     }
+ 
+     public void invalidateStatus() {
+@@ -110,6 +111,7 @@ public final class RegionizedServer {
+     }
+ 
+     public static boolean isGlobalTickThread() {
++        if (LegacyCompat.isExclusiveOwner()) return true; // Folia-Compat - legacy exclusive section owns everything
+         return INSTANCE.tickHandle == TickRegionScheduler.getCurrentTickingTask();
+     }
+ 
+@@ -305,6 +307,7 @@ public final class RegionizedServer {
+ 
+         // scheduler
+         ((FoliaGlobalRegionScheduler)Bukkit.getGlobalRegionScheduler()).tick();
++        LegacyCompat.tickLegacyScheduler(); // Folia-Compat - legacy BukkitScheduler sync tasks
+ 
+         // commands
+         ((DedicatedServer)MinecraftServer.getServer()).handleConsoleInputs();
+diff --git a/io/papermc/paper/threadedregions/RegionizedTaskQueue.java b/io/papermc/paper/threadedregions/RegionizedTaskQueue.java
+index 25a0b1d56652e4455a188d0f413581638d5ef538..a540c30d8e38a458c781b4d3b0b1248aaaf99f5a 100644
+--- a/io/papermc/paper/threadedregions/RegionizedTaskQueue.java
++++ b/io/papermc/paper/threadedregions/RegionizedTaskQueue.java
+@@ -80,7 +80,7 @@ public final class RegionizedTaskQueue {
+             this.world = world;
+         }
+ 
+-        private boolean executeGlobalChunkTask() {
++        public boolean executeGlobalChunkTask() { // Lumina - called by LegacyCompat while waiting for chunk loads
+             final Runnable run = this.globalChunkTask.poll();
+             if (run != null) {
+                 run.run();
+diff --git a/io/papermc/paper/threadedregions/TickRegionScheduler.java b/io/papermc/paper/threadedregions/TickRegionScheduler.java
+index fa6b8d756195c1b430cc11214a901bd42eebc98d..f9ca8ad7dc160cc2b23b34da1f94c161195d86c4 100644
+--- a/io/papermc/paper/threadedregions/TickRegionScheduler.java
++++ b/io/papermc/paper/threadedregions/TickRegionScheduler.java
+@@ -135,6 +135,77 @@ public final class TickRegionScheduler {
+         return tickThreadRunner.currentTickingTask;
+     }
+ 
++    // Folia-Compat start - let a waiting legacy exclusive section execute another region's queued tasks inline
++    /**
++     * Runs the queued (non-tick) tasks of the given region on the current tick thread, temporarily swapping out the
++     * current thread's region context. Used while a legacy exclusive section waits for a chunk load that the target
++     * region must complete: with few tick threads, the waiting thread may be the only one able to run it.
++     * @return {@code false} if the region could not be acquired (e.g. it is ticking on another thread)
++     */
++    static boolean legacyRunRegionTasksInline(final RegionScheduleHandle handle, final BooleanSupplier canContinue) {
++        if (!(Thread.currentThread() instanceof TickThreadRunner runner) || handle.region == null) {
++            return false;
++        }
++        if (!handle.tryMarkTicking()) {
++            return false;
++        }
++        final ThreadedRegionizer.ThreadedRegion<TickRegions.TickRegionData, TickRegions.TickRegionSectionData> savedRegion = runner.currentTickingRegion;
++        final RegionizedWorldData savedWorldData = runner.currentTickingWorldRegionizedData;
++        final SchedulerThreadPool.SchedulableTick savedTask = runner.currentTickingTask;
++        final ca.spottedleaf.leafprofiler.RegionizedProfiler.Handle savedProfiler = runner.profiler;
++        runner.currentTickingRegion = null;
++        runner.currentTickingWorldRegionizedData = null;
++        runner.currentTickingTask = null;
++        try {
++            TickRegionScheduler.setTickTask(handle);
++            TickRegionScheduler.setTickingRegion(handle.region.region);
++            try {
++                handle.runRegionTasks(canContinue);
++            } finally {
++                TickRegionScheduler.setTickTask(null);
++                TickRegionScheduler.setTickingRegion(null);
++            }
++        } finally {
++            runner.currentTickingRegion = savedRegion;
++            runner.currentTickingWorldRegionizedData = savedWorldData;
++            runner.currentTickingTask = savedTask;
++            runner.profiler = savedProfiler;
++            handle.markNotTicking();
++        }
++        return true;
++    }
++    // Folia-Compat end - let a waiting legacy exclusive section execute another region's queued tasks inline
++
++    // Folia-Compat start - run code in another region's context while all regions are paused
++    /**
++     * Executes {@code run} with the current tick thread's region context switched to {@code region}.
++     * Only valid inside a legacy exclusive section (every other region is parked), so the region's data
++     * cannot be accessed concurrently.
++     */
++    static <T> T legacyRunInRegion(final ThreadedRegionizer.ThreadedRegion<TickRegions.TickRegionData, TickRegions.TickRegionSectionData> region,
++                                   final java.util.function.Supplier<T> run) {
++        if (!(Thread.currentThread() instanceof TickThreadRunner runner) || runner.currentTickingRegion == region) {
++            return run.get();
++        }
++        final ThreadedRegionizer.ThreadedRegion<TickRegions.TickRegionData, TickRegions.TickRegionSectionData> savedRegion = runner.currentTickingRegion;
++        final RegionizedWorldData savedWorldData = runner.currentTickingWorldRegionizedData;
++        final SchedulerThreadPool.SchedulableTick savedTask = runner.currentTickingTask;
++        final ca.spottedleaf.leafprofiler.RegionizedProfiler.Handle savedProfiler = runner.profiler;
++        runner.currentTickingRegion = region;
++        runner.currentTickingWorldRegionizedData = region.getData().getOrCreateRegionizedData(region.regioniser.world.worldRegionData);
++        runner.currentTickingTask = region.getData().getRegionSchedulingHandle();
++        runner.profiler = ca.spottedleaf.leafprofiler.RegionizedProfiler.Handle.NO_OP_HANDLE;
++        try {
++            return run.get();
++        } finally {
++            runner.currentTickingRegion = savedRegion;
++            runner.currentTickingWorldRegionizedData = savedWorldData;
++            runner.currentTickingTask = savedTask;
++            runner.profiler = savedProfiler;
++        }
++    }
++    // Folia-Compat end - run code in another region's context while all regions are paused
++
+     // Folia start - profiler
+     public static ca.spottedleaf.leafprofiler.RegionizedProfiler.Handle getProfiler() {
+         final Thread currThread = Thread.currentThread();
+@@ -336,6 +407,7 @@ public final class TickRegionScheduler {
+             final boolean ret;
+             final FoliaWatchdogThread.RunningTick runningTick = new FoliaWatchdogThread.RunningTick(tickStart, this, Thread.currentThread()); // Folia - watchdog
+             WATCHDOG_THREAD.addTick(runningTick); // Folia - watchdog
++            LegacyCompat.enterRegion(); // Folia-Compat - legacy plugin safepoint
+             try {
+                 ret = this.runRegionTasks(() -> {
+                     return !RegionScheduleHandle.this.cancelled.get() && canContinue.getAsBoolean();
+@@ -345,6 +417,7 @@ public final class TickRegionScheduler {
+                 // don't release region for another tick
+                 return null;
+             } finally {
++                LegacyCompat.exitRegion(); // Folia-Compat - legacy plugin safepoint
+                 WATCHDOG_THREAD.removeTick(runningTick); // Folia - watchdog
+                 final long tickEnd = System.nanoTime();
+                 final long cpuEnd = MEASURE_CPU_TIME ? THREAD_MX_BEAN.getCurrentThreadCpuTime() : 0L;
+@@ -413,6 +486,7 @@ public final class TickRegionScheduler {
+ 
+             final FoliaWatchdogThread.RunningTick runningTick = new FoliaWatchdogThread.RunningTick(tickStart, this, Thread.currentThread()); // Folia - region threading
+             WATCHDOG_THREAD.addTick(runningTick); // Folia - region threading
++            LegacyCompat.enterRegion(); // Folia-Compat - legacy plugin safepoint
+             try {
+                 // next start isn't updated until the end of this tick
+                 this.tickRegion(tickCount, tickStart, scheduledEnd);
+@@ -421,6 +495,7 @@ public final class TickRegionScheduler {
+                 // regionFailed will schedule a shutdown, so we should avoid letting this region tick further
+                 return false;
+             } finally {
++                LegacyCompat.exitRegion(); // Folia-Compat - legacy plugin safepoint
+                 WATCHDOG_THREAD.removeTick(runningTick); // Folia - region threading
+                 final long tickEnd = System.nanoTime();
+                 final long cpuEnd = MEASURE_CPU_TIME ? THREAD_MX_BEAN.getCurrentThreadCpuTime() : 0L;
+diff --git a/io/papermc/paper/threadedregions/TickRegions.java b/io/papermc/paper/threadedregions/TickRegions.java
+index 988fe74578065c9464f5639e5cc6af79619edef5..3dc69e972bfcf9f8931865014eb8e03af181435a 100644
+--- a/io/papermc/paper/threadedregions/TickRegions.java
++++ b/io/papermc/paper/threadedregions/TickRegions.java
+@@ -31,6 +31,22 @@ public final class TickRegions implements ThreadedRegionizer.RegionCallbacks<Tic
+     private static boolean initialised;
+     private static TickRegionScheduler scheduler;
+ 
++    // Lumina start - legacy plugins may sync-load chunks in onEnable, which needs region threads running
++    private static volatile boolean started;
++
++    public static boolean isStarted() {
++        return started;
++    }
++
++    public static synchronized void start() {
++        if (started) {
++            throw new IllegalStateException("Already started");
++        }
++        started = true;
++        getScheduler().init();
++    }
++    // Lumina end - legacy plugins may sync-load chunks in onEnable, which needs region threads running
++
+     public static TickRegionScheduler getScheduler() {
+         return scheduler;
+     }
+@@ -154,6 +170,7 @@ public final class TickRegions implements ThreadedRegionizer.RegionCallbacks<Tic
+         }
+ 
+         static void updateCurrentRegion() {
++            if (TickRegionScheduler.getCurrentRegion() == null) return; // Folia-Compat - stats only; legacy exclusive sections may run without a region
+             TickRegionScheduler.getCurrentRegion().getData().getRegionStats().updateFrom(TickRegionScheduler.getCurrentRegionizedWorldData());
+         }
+     }
+diff --git a/net/minecraft/commands/Commands.java b/net/minecraft/commands/Commands.java
+index ad19e9e599b26dfdb53929d9410860cb1b97698c..ad18dfcdce2ef7bf53e69b519c5ed2f0677ea290 100644
+--- a/net/minecraft/commands/Commands.java
++++ b/net/minecraft/commands/Commands.java
+@@ -185,15 +185,15 @@ public class Commands {
+         AdvancementCommands.register(this.dispatcher);
+         AttributeCommand.register(this.dispatcher, context);
+         ExecuteCommand.register(this.dispatcher, context);
+-        //BossBarCommands.register(this.dispatcher, context); // Folia - region threading - TODO
++        if (io.papermc.paper.threadedregions.LegacyCompat.COMMANDS) BossBarCommands.register(this.dispatcher, context); // Folia - region threading - TODO // Folia-Compat - re-enabled, runs in legacy exclusive section
+         ClearInventoryCommands.register(this.dispatcher, context);
+-        //CloneCommands.register(this.dispatcher, context); // Folia - region threading - TODO
++        if (io.papermc.paper.threadedregions.LegacyCompat.COMMANDS) CloneCommands.register(this.dispatcher, context); // Folia - region threading - TODO // Folia-Compat - re-enabled, runs in legacy exclusive section
+         DamageCommand.register(this.dispatcher, context);
+-        //DataCommands.register(this.dispatcher); // Folia - region threading - TODO
++        if (io.papermc.paper.threadedregions.LegacyCompat.COMMANDS) DataCommands.register(this.dispatcher); // Folia - region threading - TODO // Folia-Compat - re-enabled, runs in legacy exclusive section
+         //DataPackCommand.register(this.dispatcher, context); // Folia - region threading - TODO
+-        //DebugCommand.register(this.dispatcher); // Folia - region threading - TODO
++        if (io.papermc.paper.threadedregions.LegacyCompat.COMMANDS) DebugCommand.register(this.dispatcher); // Folia - region threading - TODO // Folia-Compat - re-enabled, runs in legacy exclusive section
+         DefaultGameModeCommands.register(this.dispatcher);
+-        //DialogCommand.register(this.dispatcher, context); // Folia - region threading - TODO
++        if (io.papermc.paper.threadedregions.LegacyCompat.COMMANDS) DialogCommand.register(this.dispatcher, context); // Folia - region threading - TODO // Folia-Compat - re-enabled, runs in legacy exclusive section
+         DifficultyCommand.register(this.dispatcher);
+         EffectCommands.register(this.dispatcher, context);
+         EmoteCommands.register(this.dispatcher);
+@@ -202,17 +202,17 @@ public class Commands {
+         FillCommand.register(this.dispatcher, context);
+         FillBiomeCommand.register(this.dispatcher, context);
+         ForceLoadCommand.register(this.dispatcher);
+-        //FunctionCommand.register(this.dispatcher); // Folia - region threading - TODO
++        if (io.papermc.paper.threadedregions.LegacyCompat.COMMANDS) FunctionCommand.register(this.dispatcher); // Folia - region threading - TODO // Folia-Compat - re-enabled, runs in legacy exclusive section
+         GameModeCommand.register(this.dispatcher);
+         GameRuleCommand.register(this.dispatcher, context);
+         GiveCommand.register(this.dispatcher, context);
+         HelpCommand.register(this.dispatcher);
+-        //ItemCommands.register(this.dispatcher, context); // Folia - region threading - TODO later
++        if (io.papermc.paper.threadedregions.LegacyCompat.COMMANDS) ItemCommands.register(this.dispatcher, context); // Folia - region threading - TODO later // Folia-Compat - re-enabled, runs in legacy exclusive section
+         KickCommand.register(this.dispatcher);
+         KillCommand.register(this.dispatcher);
+         ListPlayersCommand.register(this.dispatcher);
+         LocateCommand.register(this.dispatcher, context);
+-        //LootCommand.register(this.dispatcher, context); // Folia - region threading - TODO later
++        if (io.papermc.paper.threadedregions.LegacyCompat.COMMANDS) LootCommand.register(this.dispatcher, context); // Folia - region threading - TODO later // Folia-Compat - re-enabled, runs in legacy exclusive section
+         MsgCommand.register(this.dispatcher);
+         ParticleCommand.register(this.dispatcher, context);
+         PlaceCommand.register(this.dispatcher);
+@@ -220,32 +220,32 @@ public class Commands {
+         RandomCommand.register(this.dispatcher);
+         //ReloadCommand.register(this.dispatcher); // Folia - region threading
+         RecipeCommand.register(this.dispatcher);
+-        //ReturnCommand.register(this.dispatcher); // Folia - region threading - TODO later
++        if (io.papermc.paper.threadedregions.LegacyCompat.COMMANDS) ReturnCommand.register(this.dispatcher); // Folia - region threading - TODO later // Folia-Compat - re-enabled, runs in legacy exclusive section
+         //RideCommand.register(this.dispatcher); // Folia - region threading - TODO later
+         //RotateCommand.register(this.dispatcher); // Folia - region threading - TODO later
+         SayCommand.register(this.dispatcher);
+-        //ScheduleCommand.register(this.dispatcher); // Folia - region threading
+-        //ScoreboardCommand.register(this.dispatcher, context); // Folia - region threading
++        if (io.papermc.paper.threadedregions.LegacyCompat.COMMANDS) ScheduleCommand.register(this.dispatcher); // Folia - region threading // Folia-Compat - re-enabled, runs in legacy exclusive section
++        if (io.papermc.paper.threadedregions.LegacyCompat.COMMANDS) ScoreboardCommand.register(this.dispatcher, context); // Folia - region threading // Folia-Compat - re-enabled, runs in legacy exclusive section
+         SeedCommand.register(this.dispatcher, selection != Commands.CommandSelection.INTEGRATED);
+         VersionCommand.register(this.dispatcher, selection != Commands.CommandSelection.INTEGRATED);
+         SetBlockCommand.register(this.dispatcher, context);
+         SetSpawnCommand.register(this.dispatcher);
+         SetWorldSpawnCommand.register(this.dispatcher);
+-        //SpectateCommand.register(this.dispatcher); // Folia - region threading - TODO later
+-        //SpreadPlayersCommand.register(this.dispatcher); // Folia - region threading - TODO later
++        if (io.papermc.paper.threadedregions.LegacyCompat.COMMANDS) SpectateCommand.register(this.dispatcher); // Folia - region threading - TODO later // Folia-Compat - re-enabled, runs in legacy exclusive section
++        if (io.papermc.paper.threadedregions.LegacyCompat.COMMANDS) SpreadPlayersCommand.register(this.dispatcher); // Folia - region threading - TODO later // Folia-Compat - re-enabled, runs in legacy exclusive section
+         StopSoundCommand.register(this.dispatcher);
+         SummonCommand.register(this.dispatcher, context);
+-        //TagCommand.register(this.dispatcher); // Folia - region threading - TODO later
+-        //TeamCommand.register(this.dispatcher, context); // Folia - region threading - TODO later
+-        //TeamMsgCommand.register(this.dispatcher); // Folia - region threading - TODO later
++        if (io.papermc.paper.threadedregions.LegacyCompat.COMMANDS) TagCommand.register(this.dispatcher); // Folia - region threading - TODO later // Folia-Compat - re-enabled, runs in legacy exclusive section
++        if (io.papermc.paper.threadedregions.LegacyCompat.COMMANDS) TeamCommand.register(this.dispatcher, context); // Folia - region threading - TODO later // Folia-Compat - re-enabled, runs in legacy exclusive section
++        if (io.papermc.paper.threadedregions.LegacyCompat.COMMANDS) TeamMsgCommand.register(this.dispatcher); // Folia - region threading - TODO later // Folia-Compat - re-enabled, runs in legacy exclusive section
+         TeleportCommand.register(this.dispatcher);
+         TellRawCommand.register(this.dispatcher, context);
+         //TestCommand.register(this.dispatcher, context); // Folia - region threading
+-        //TickCommand.register(this.dispatcher); // Folia - region threading - TODO later
++        if (io.papermc.paper.threadedregions.LegacyCompat.COMMANDS) TickCommand.register(this.dispatcher); // Folia - region threading - TODO later // Folia-Compat - re-enabled, runs in legacy exclusive section
+         TimeCommand.register(this.dispatcher);
+         TitleCommand.register(this.dispatcher, context);
+-        //TriggerCommand.register(this.dispatcher); // Folia - region threading - TODO later
+-        //WaypointCommand.register(this.dispatcher, context); // Folia - region threading - TODO later
++        if (io.papermc.paper.threadedregions.LegacyCompat.COMMANDS) TriggerCommand.register(this.dispatcher); // Folia - region threading - TODO later // Folia-Compat - re-enabled, runs in legacy exclusive section
++        if (io.papermc.paper.threadedregions.LegacyCompat.COMMANDS) WaypointCommand.register(this.dispatcher, context); // Folia - region threading - TODO later // Folia-Compat - re-enabled, runs in legacy exclusive section
+         WeatherCommand.register(this.dispatcher);
+         WorldBorderCommand.register(this.dispatcher);
+         if (JvmProfiler.INSTANCE.isAvailable()) {
+@@ -354,12 +354,19 @@ public class Commands {
+ 
+         try {
+             if (contextChain != null) {
+-                executeCommandInContext(
++                // Folia-Compat start - commands run while all regions are paused, so cross-region commands are safe
++                final Runnable execute = () -> executeCommandInContext(
+                     commandSourceStack,
+                     executionContext -> ExecutionContext.queueInitialCommandExecution(
+                         executionContext, command, contextChain, commandSourceStack, CommandResultCallback.EMPTY
+                     )
+                 );
++                if (io.papermc.paper.threadedregions.LegacyCompat.COMMANDS) {
++                    io.papermc.paper.threadedregions.LegacyCompat.runExclusive(execute);
++                } else {
++                    execute.run();
++                }
++                // Folia-Compat end - commands run while all regions are paused, so cross-region commands are safe
+             }
+             // Paper start
+         } catch (Throwable var12) { // always gracefully handle it, no matter how bad:tm:
+diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
+index 196996aa8094bd53b61f2797b4ff3b9bcae16132..434860a89bebce84a2f09996730833ea9add25ec 100644
+--- a/net/minecraft/server/MinecraftServer.java
++++ b/net/minecraft/server/MinecraftServer.java
+@@ -782,6 +782,12 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+         }
+         // Paper end - Configurable player collision
+ 
++        // Lumina start - start region threads (not the global tick) before enabling plugins, so legacy plugins
++        // that sync-load chunks or touch worlds in onEnable can be served. Players still cannot join until init().
++        if (io.papermc.paper.threadedregions.LegacyCompat.ENABLED && !io.papermc.paper.threadedregions.TickRegions.isStarted()) {
++            io.papermc.paper.threadedregions.TickRegions.start();
++        }
++        // Lumina end - start region threads before enabling plugins
+         this.server.enablePlugins(org.bukkit.plugin.PluginLoadOrder.POSTWORLD);
+         this.server.spark.registerCommandBeforePlugins(this.server); // Paper - spark
+         this.server.spark.enableAfterPlugins(this.server); // Paper - spark
+diff --git a/net/minecraft/server/level/ServerChunkCache.java b/net/minecraft/server/level/ServerChunkCache.java
+index 250d09fe3c49d1d0cbfde0fc06abd16fe329f9ed..1ce1a1fa391d94ce517ff6ee1a45f4214f698809 100644
+--- a/net/minecraft/server/level/ServerChunkCache.java
++++ b/net/minecraft/server/level/ServerChunkCache.java
+@@ -105,6 +105,20 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+         // Folia end - region threading
+         final ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler chunkTaskScheduler = ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler();
+         final CompletableFuture<ChunkAccess> completable = new CompletableFuture<>();
++        // Folia-Compat start - a legacy exclusive section loading a chunk of another region must let that region run
++        if (io.papermc.paper.threadedregions.LegacyCompat.isExclusiveOwner()
++                && !io.papermc.paper.threadedregions.LegacyCompat.isOwnedByCurrentRegion(this.level, chunkX, chunkZ)) {
++            io.papermc.paper.threadedregions.LegacyCompat.awaitReleased(this.level, chunkX, chunkZ, () -> chunkTaskScheduler.scheduleChunkLoad(
++                chunkX, chunkZ, toStatus, true, ca.spottedleaf.concurrentutil.util.Priority.BLOCKING,
++                completable::complete
++            ), completable);
++            final ChunkAccess legacyRet = completable.join();
++            if (legacyRet == null) {
++                throw new IllegalStateException("Chunk not loaded when requested");
++            }
++            return legacyRet;
++        }
++        // Folia-Compat end - a legacy exclusive section loading a chunk of another region must let that region run
+         chunkTaskScheduler.scheduleChunkLoad(
+             chunkX, chunkZ, toStatus, true, ca.spottedleaf.concurrentutil.util.Priority.BLOCKING,
+             completable::complete
+diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
+index 5e3be75b27ed609be005e8169dc84c125518253e..b4d392f6aaab7d011acead6f16d81beed09ba914 100644
+--- a/net/minecraft/server/level/ServerLevel.java
++++ b/net/minecraft/server/level/ServerLevel.java
+@@ -1643,6 +1643,16 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+ 
+     // CraftBukkit start
+     private boolean addEntity(Entity entity, @Nullable org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason spawnReason) {
++        // Folia-Compat start - legacy exclusive sections add entities in the context of the owning region
++        if (io.papermc.paper.threadedregions.LegacyCompat.isExclusiveOwner()) {
++            return io.papermc.paper.threadedregions.LegacyCompat.inRegionAt(this, entity.getBlockX() >> 4, entity.getBlockZ() >> 4,
++                () -> this.addEntity0(entity, spawnReason));
++        }
++        return this.addEntity0(entity, spawnReason);
++    }
++
++    private boolean addEntity0(Entity entity, @Nullable org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason spawnReason) {
++        // Folia-Compat end - legacy exclusive sections add entities in the context of the owning region
+         org.spigotmc.AsyncCatcher.catchOp("entity add"); // Spigot
+         entity.generation = false; // Paper - Don't fire sync event during generation; Reset flag if it was added during a ServerLevel generation process
+         // Paper start - extra debug info
+@@ -2030,7 +2040,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+ 
+     @Override
+     public void blockEvent(BlockPos pos, Block block, int eventID, int eventParam) {
+-        this.getCurrentWorldData().pushBlockEvent(new BlockEventData(pos, block, eventID, eventParam)); // Folia - regionised ticking
++        this.getCurrentWorldData(pos.getX() >> 4, pos.getZ() >> 4).pushBlockEvent(new BlockEventData(pos, block, eventID, eventParam)); // Folia - regionised ticking // Folia-Compat
+     }
+ 
+     private void runBlockEvents() {
+@@ -2766,12 +2776,12 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+         @Override
+         public void onTickingStart(Entity entity) {
+             if (entity instanceof net.minecraft.world.entity.Marker && !paperConfig().entities.markers.tick) return; // Paper - Configurable marker ticking
+-            ServerLevel.this.getCurrentWorldData().addEntityTickingEntity(entity); // Folia - region threading
++            ServerLevel.this.getCurrentWorldData(entity).addEntityTickingEntity(entity); // Folia-Compat // Folia - region threading
+         }
+ 
+         @Override
+         public void onTickingEnd(Entity entity) {
+-            ServerLevel.this.getCurrentWorldData().removeEntityTickingEntity(entity); // Folia - region threading
++            ServerLevel.this.getCurrentWorldData(entity).removeEntityTickingEntity(entity); // Folia-Compat // Folia - region threading
+             // Paper start - Reset pearls when they stop being ticked
+             if (ServerLevel.this.paperConfig().fixes.disableUnloadedChunkEnderpearlExploit && ServerLevel.this.paperConfig().misc.legacyEnderPearlBehavior && entity instanceof net.minecraft.world.entity.projectile.ThrownEnderpearl pearl) {
+                 pearl.setOwner(null);
+@@ -2782,7 +2792,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+         @Override
+         public void onTrackingStart(Entity entity) {
+             org.spigotmc.AsyncCatcher.catchOp("entity register"); // Spigot
+-            ServerLevel.this.getCurrentWorldData().addLoadedEntity(entity); // Folia - region threading
++            ServerLevel.this.getCurrentWorldData(entity).addLoadedEntity(entity); // Folia-Compat // Folia - region threading
+             // ServerLevel.this.getChunkSource().addEntity(entity); // Paper - ignore and warn about illegal addEntity calls instead of crashing server; moved down below valid=true
+             if (entity instanceof ServerPlayer serverPlayer) {
+                 ServerLevel.this.players.add(serverPlayer);
+@@ -2833,7 +2843,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+         @Override
+         public void onTrackingEnd(Entity entity) {
+             org.spigotmc.AsyncCatcher.catchOp("entity unregister"); // Spigot
+-            ServerLevel.this.getCurrentWorldData().removeLoadedEntity(entity); // Folia - region threading
++            ServerLevel.this.getCurrentWorldData(entity).removeLoadedEntity(entity); // Folia-Compat // Folia - region threading
+             // Spigot start // TODO I don't think this is needed anymore
+             if (entity instanceof Player player) {
+                 for (final ServerLevel level : ServerLevel.this.getServer().getAllLevels()) {
+diff --git a/net/minecraft/world/level/Level.java b/net/minecraft/world/level/Level.java
+index 2049990edf0280d2b74b7284b32e78678a5ca6db..d3fadbab23533dabbd6e08dce018d59c59145446 100644
+--- a/net/minecraft/world/level/Level.java
++++ b/net/minecraft/world/level/Level.java
+@@ -816,6 +816,11 @@ public abstract class Level implements LevelAccessor, UUIDLookup<Entity>, AutoCl
+ 
+     public io.papermc.paper.threadedregions.RegionizedWorldData getCurrentWorldData() {
+         final io.papermc.paper.threadedregions.RegionizedWorldData ret = io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentRegionizedWorldData();
++        // Folia-Compat start - legacy exclusive sections may touch any world
++        if (io.papermc.paper.threadedregions.LegacyCompat.isExclusiveOwner()) {
++            return io.papermc.paper.threadedregions.LegacyCompat.resolveExclusive((net.minecraft.server.level.ServerLevel)this, ret);
++        }
++        // Folia-Compat end - legacy exclusive sections may touch any world
+         if (ret == null) {
+             return ret;
+         }
+@@ -826,6 +831,27 @@ public abstract class Level implements LevelAccessor, UUIDLookup<Entity>, AutoCl
+         return ret;
+     }
+ 
++    // Folia-Compat start - resolve the owning region's data while in a legacy exclusive section
++    public io.papermc.paper.threadedregions.RegionizedWorldData getCurrentWorldData(final int chunkX, final int chunkZ) {
++        if (io.papermc.paper.threadedregions.LegacyCompat.isExclusiveOwner()) {
++            final io.papermc.paper.threadedregions.RegionizedWorldData owner =
++                io.papermc.paper.threadedregions.LegacyCompat.worldDataAt((net.minecraft.server.level.ServerLevel)this, chunkX, chunkZ);
++            if (owner != null) {
++                return owner;
++            }
++        }
++        return this.getCurrentWorldData();
++    }
++
++    public io.papermc.paper.threadedregions.RegionizedWorldData getCurrentWorldData(final net.minecraft.world.entity.Entity entity) {
++        return this.getCurrentWorldData(entity.getBlockX() >> 4, entity.getBlockZ() >> 4);
++    }
++
++    public io.papermc.paper.threadedregions.RegionizedWorldData getCurrentWorldData(final net.minecraft.world.level.chunk.LevelChunk chunk) {
++        return this.getCurrentWorldData(chunk.locX, chunk.locZ);
++    }
++    // Folia-Compat end - resolve the owning region's data while in a legacy exclusive section
++
+     @Override
+     public List<net.minecraft.server.level.ServerPlayer> getLocalPlayers() {
+         return this.getCurrentWorldData().getLocalPlayers();
+@@ -1105,6 +1131,16 @@ public abstract class Level implements LevelAccessor, UUIDLookup<Entity>, AutoCl
+ 
+     @Override
+     public boolean setBlock(BlockPos pos, BlockState state, int flags, int recursionLeft) {
++        // Folia-Compat start - resolve region data for this position while in a legacy exclusive section
++        if (io.papermc.paper.threadedregions.LegacyCompat.isExclusiveOwner() && this instanceof net.minecraft.server.level.ServerLevel serverLevel) {
++            return io.papermc.paper.threadedregions.LegacyCompat.inRegionAt(serverLevel, pos.getX() >> 4, pos.getZ() >> 4,
++                () -> this.setBlock0(pos, state, flags, recursionLeft));
++        }
++        return this.setBlock0(pos, state, flags, recursionLeft);
++    }
++
++    private boolean setBlock0(BlockPos pos, BlockState state, int flags, int recursionLeft) {
++        // Folia-Compat end - resolve region data for this position while in a legacy exclusive section
+         ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread((ServerLevel)this, pos, "Updating block asynchronously"); // Folia - region threading
+         io.papermc.paper.threadedregions.RegionizedWorldData worldData = this.getCurrentWorldData(); // Folia - region threading
+         // CraftBukkit start - tree generation
