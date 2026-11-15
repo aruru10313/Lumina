@@ -1,0 +1,4 @@
+name: LegacyTest
+version: 1.0
+main: kr.foliacompat.test.LegacyTestPlugin
+api-version: '26.3'
