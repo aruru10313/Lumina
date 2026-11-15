@@ -59,6 +59,7 @@ subprojects {
         options.encoding = Charsets.UTF_8.name()
         options.release = 21
         options.isFork = true
+        options.forkOptions.memoryMaximumSize = "2G" // Lumina - default forked javac heap is too small for this tree
     }
     tasks.withType<Javadoc> {
         options.encoding = Charsets.UTF_8.name()
