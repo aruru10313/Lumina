@@ -1,11 +1,11 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: aruru10313 <195274207+aruru10313@users.noreply.github.com>
-Date: Sun, 15 Nov 2026 19:30:45 +0900
+Date: Sun, 15 Nov 2026 19:49:09 +0900
 Subject: [PATCH] Legacy plugin compatibility mode
 
 
 diff --git a/src/main/java/ca/spottedleaf/moonrise/common/util/TickThread.java b/src/main/java/ca/spottedleaf/moonrise/common/util/TickThread.java
-index 6c74787321748702022787b65ff5465f8bcec4ad..112bd967b3e033e67de5097d2b2e75e4b8a67ad6 100644
+index e417c9a140778954572fb8bc190fad64feacffe0..fa04b037a183e2b8df5414ca38e49c39fd312a46 100644
 --- a/src/main/java/ca/spottedleaf/moonrise/common/util/TickThread.java
 +++ b/src/main/java/ca/spottedleaf/moonrise/common/util/TickThread.java
 @@ -143,6 +143,7 @@ public class TickThread extends Thread {
@@ -34,7 +34,7 @@ index 6c74787321748702022787b65ff5465f8bcec4ad..112bd967b3e033e67de5097d2b2e75e4
  
      public static boolean isTickThreadFor(final Level world, final ChunkPos pos) {
 +        if (io.papermc.paper.threadedregions.LegacyCompat.isExclusiveOwner()) return true; // Folia-Compat - legacy exclusive section
-         return isTickThreadFor(world, pos.x(), pos.z());
+         return isTickThreadFor(world, pos.x, pos.z);
      }
  
      public static boolean isTickThreadFor(final Level world, final Vec3 pos) {
@@ -245,10 +245,10 @@ index 6369b13e1fcdbdb25dd9d6e4d3bffdedbee4f739..261a45a29c7ee12c0535dd147a47d9e7
          // Folia end - block plugins not marked as supported
          Logger jul = PaperPluginLogger.getLogger(configuration);
 diff --git a/src/main/java/io/papermc/paper/plugin/provider/type/spigot/SpigotPluginProviderFactory.java b/src/main/java/io/papermc/paper/plugin/provider/type/spigot/SpigotPluginProviderFactory.java
-index 6ef0042a355c65262bdb89dcf151bd644653216d..df91cc770475110e02ffc57b6229e202b0d70b9a 100644
+index 335058589eeba934105bea31a0c3aea2293a5597..b0bb7a487179a2fe1cc653a116b6ac5fa2253bfa 100644
 --- a/src/main/java/io/papermc/paper/plugin/provider/type/spigot/SpigotPluginProviderFactory.java
 +++ b/src/main/java/io/papermc/paper/plugin/provider/type/spigot/SpigotPluginProviderFactory.java
-@@ -28,7 +28,12 @@ class SpigotPluginProviderFactory implements PluginTypeFactory<SpigotPluginProvi
+@@ -37,7 +37,12 @@ class SpigotPluginProviderFactory implements PluginTypeFactory<SpigotPluginProvi
      public SpigotPluginProvider build(JarFile file, PluginDescriptionFile configuration, Path source) throws InvalidDescriptionException {
          // Folia start - block plugins not marked as supported
          if (!configuration.isFoliaSupported()) {
@@ -262,7 +262,7 @@ index 6ef0042a355c65262bdb89dcf151bd644653216d..df91cc770475110e02ffc57b6229e202
          // Folia end - block plugins not marked as supported
          // Copied from SimplePluginManager#loadPlugins
 diff --git a/src/main/java/io/papermc/paper/util/MCUtil.java b/src/main/java/io/papermc/paper/util/MCUtil.java
-index 08367eaa9f93d6213502d76be2acfe95c723c556..5259bc11f28a48cb4a3c5f87f01609ac8e59e177 100644
+index 6b3bfe5f1b7e02e5f91406e7bbc53974fe801af3..43f61dda81e1a23aeb3df42b66cf9cc0933468df 100644
 --- a/src/main/java/io/papermc/paper/util/MCUtil.java
 +++ b/src/main/java/io/papermc/paper/util/MCUtil.java
 @@ -111,6 +111,12 @@ public final class MCUtil {
@@ -279,10 +279,10 @@ index 08367eaa9f93d6213502d76be2acfe95c723c556..5259bc11f28a48cb4a3c5f87f01609ac
              if (reason != null) {
                  MinecraftServer.LOGGER.warn("Asynchronous " + reason + "!", new IllegalStateException());
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-index 9583ff67f17f60883f0c0564eb95c700c85674b4..a8b2d917f12aafd982edaa9a9d431ee3a0a2c993 100644
+index db1440b09e620ce2aa9441e92b43b0d1ab8ee7a8..1607aa69a4ddcb1bfc563ceeefaa3484c61c5ba5 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-@@ -2742,6 +2742,11 @@ public final class CraftServer implements Server {
+@@ -2746,6 +2746,11 @@ public final class CraftServer implements Server {
                  task = io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentRegion().getData().getRegionSchedulingHandle();
              }
          }
@@ -294,7 +294,7 @@ index 9583ff67f17f60883f0c0564eb95c700c85674b4..a8b2d917f12aafd982edaa9a9d431ee3
          if (!(task instanceof io.papermc.paper.threadedregions.TickRegionScheduler.RegionScheduleHandle tickHandle)) {
              throw new UnsupportedOperationException("Not on any region");
          }
-@@ -2815,6 +2820,11 @@ public final class CraftServer implements Server {
+@@ -2819,6 +2824,11 @@ public final class CraftServer implements Server {
                  task = io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentRegion().getData().getRegionSchedulingHandle();
              }
          }
@@ -307,7 +307,7 @@ index 9583ff67f17f60883f0c0564eb95c700c85674b4..a8b2d917f12aafd982edaa9a9d431ee3
              throw new UnsupportedOperationException("Not on any region");
          }
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
-index d43b1a6e6a8ac2a21b0a048e838115b0403170dd..5a022d18d67280a60b3bd9643a1e4fc8fd75ffa6 100644
+index e6cd1c4a50b32b74f70a264e869b1ab4ac9b9eb0..3b58540b5ce2497722077c529a4d712fc5b6d7c1 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
 @@ -305,6 +305,15 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
@@ -327,10 +327,10 @@ index d43b1a6e6a8ac2a21b0a048e838115b0403170dd..5a022d18d67280a60b3bd9643a1e4fc8
              throw new UnsupportedOperationException("Must use teleportAsync while in region threading");
          }
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-index fbf31420cb83287c080c1832bccc167c81526563..0bd95ac5d2d172fbe07686e5385969d7e7b5a17d 100644
+index 403859ddf90036dc812eab707cd06499c6dbf8f7..0c611fed84704f2584604cfd5a36c2770eb74b7d 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-@@ -1335,6 +1335,15 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
+@@ -1333,6 +1333,15 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
      @Override
      protected boolean teleport0(Location location, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause cause, io.papermc.paper.entity.TeleportFlag... flags) {
          // Folia start - region threading
@@ -434,10 +434,10 @@ index ab76c7f9bb0a4980a07a4d08c0d3ecadbca9668b..98eec199360f20ee468293bbc50f863e
          net.minecraft.world.scores.Scoreboard newBoard = scoreboard.getHandle();
          if (oldBoard == newBoard) {
 diff --git a/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java b/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
-index c414da018d73baa0a2612772f45899b642ea3a5d..efbfd23002aa9f111bcd204a3ce8c7808889dcc1 100644
+index 936b812843dfc1b58e4fb3c41a0f9683258a1a98..015f38781e2cb629dfc2aa8a3baeba3590f42fa7 100644
 --- a/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
 +++ b/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
-@@ -376,7 +376,7 @@ public final class CraftMagicNumbers implements UnsafeValues {
+@@ -373,7 +373,7 @@ public final class CraftMagicNumbers implements UnsafeValues {
          }
  
          // Folia start - block plugins not marked as supported
@@ -465,7 +465,7 @@ index 905dde12db8ac8dc0ff8ff6898867039e6e4e550..b7000c4af4ae1764691a81bea45e2a2f
          }
          return true;
 diff --git a/src/main/java/org/spigotmc/SpigotConfig.java b/src/main/java/org/spigotmc/SpigotConfig.java
-index 78fd32976b9394d5a6ddeb0444eae3f5703ab940..585d84786cae499868625aabd270f6e682ae175b 100644
+index 36056baa20a055b89fdb5c796d25fa1f2c04794d..7ac177b48ce9f3ac08a52b1d83c629b65e051e3e 100644
 --- a/src/main/java/org/spigotmc/SpigotConfig.java
 +++ b/src/main/java/org/spigotmc/SpigotConfig.java
 @@ -183,7 +183,7 @@ public class SpigotConfig {
